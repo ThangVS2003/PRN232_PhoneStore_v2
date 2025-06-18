@@ -34,5 +34,18 @@ namespace Service.Service
         {
             return await _productRepository.GetByBrandIdAsync(brandId);
         }
+        public async Task<List<Product>> GetByColorNameAsync(string colorName)
+        {
+            return await _productRepository.GetByColorNameAsync(colorName);
+        }
+        public async Task<Product?> GetBySerialNumberAsync(string serialNumber)
+        {
+            return await _productRepository.GetBySerialNumberAsync(serialNumber);
+        }
+        public async Task<List<Product>> GetProductsByVersionNameAsync(string versionName)
+        {
+            return await _productRepository.GetProductsByVersionNameAsync(versionName);
+        }
+
     }
 }
