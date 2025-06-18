@@ -45,5 +45,55 @@ namespace PhoneStoreAPI.Controllers
             var products = await _productService.SearchAsync(name, brandId, minPrice, maxPrice);
             return Ok(products);
         }
+        [HttpGet("by-color")]
+        public async Task<IActionResult> GetProductsByColor([FromQuery] string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return BadRequest("Color name is required.");
+
+            var products = await _productService.GetByColorNameAsync(name);
+
+            var result = products.Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.Description,
+                p.MainImage,
+                Variants = p.ProductVariants
+                    .Where(v => v.Color?.Name == name && v.IsDeleted == false)
+                    .Select(v => new
+                    {
+                        v.Id,
+                        v.OriginalPrice,
+                        v.SellingPrice,
+                        Color = v.Color?.Name,
+                        Version = v.Version?.Name,
+                        v.StockQuantity,
+                        v.Image
+                    })
+            });
+
+            return Ok(result);
+        }
+        [HttpGet("serial/{serialNumber}")]
+        public async Task<IActionResult> GetBySerialNumber(string serialNumber)
+        {
+            var product = await _productService.GetBySerialNumberAsync(serialNumber);
+            if (product == null)
+                return NotFound($"No product found for serial number: {serialNumber}");
+            return Ok(product);
+        }
+        [HttpGet("version-name/{versionName}")]
+        public async Task<IActionResult> GetProductsByVersionName(string versionName)
+        {
+            var products = await _productService.GetProductsByVersionNameAsync(versionName);
+            if (products == null || !products.Any())
+            {
+                return NotFound($"No products found for version: {versionName}");
+            }
+
+            return Ok(products);
+        }
+
     }
 }

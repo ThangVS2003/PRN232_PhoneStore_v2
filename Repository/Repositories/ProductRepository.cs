@@ -55,5 +55,56 @@ namespace Repository.Repository
             Console.WriteLine($"GetByBrandIdAsync: Found {products.Count} products for brandId={brandId}");
             return products;
         }
+        public async Task<List<Product>> GetByColorNameAsync(string colorName)
+        {
+            return await _context.Products
+        .Include(p => p.ProductVariants)
+            .ThenInclude(v => v.Color)
+        .Where(p => p.ProductVariants.Any(v => v.Color != null && v.Color.Name == colorName && v.IsDeleted == false))
+        .Where(p => p.IsDeleted == false)
+        .ToListAsync();
+        }
+        public async Task<Product?> GetBySerialNumberAsync(string serialNumber)
+        {
+            var product = await _context.Products
+                .Where(p => p.IsDeleted != true &&
+                            p.ProductVariants.Any(pv => pv.Serials.Any(s => s.SerialNumber == serialNumber)))
+                .Include(p => p.ProductVariants)
+                    .ThenInclude(pv => pv.Serials)
+                .FirstOrDefaultAsync();
+
+            if (product != null)
+            {
+               
+                product.ProductVariants = product.ProductVariants
+                    .Where(pv => pv.Serials.Any(s => s.SerialNumber == serialNumber))
+                    .Select(pv =>
+                    {
+                  
+                        pv.Serials = pv.Serials
+                            .Where(s => s.SerialNumber == serialNumber)
+                            .ToList();
+                        return pv;
+                    })
+                    .ToList();
+            }
+
+            Console.WriteLine($"GetBySerialNumberAsync: SerialNumber = {serialNumber}, Found = {product != null}");
+            return product;
+        }
+        public async Task<List<Product>> GetProductsByVersionNameAsync(string versionName)
+        {
+            var products = await _context.Products
+                .Where(p => p.IsDeleted != true &&
+                            p.ProductVariants.Any(pv => pv.Version != null && pv.Version.Name == versionName))
+                .Include(p => p.ProductVariants)
+                    .ThenInclude(pv => pv.Version)
+                .ToListAsync();
+
+            return products;
+        }
+
+
+
     }
 }
