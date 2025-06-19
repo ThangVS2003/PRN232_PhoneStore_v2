@@ -33,5 +33,37 @@ namespace Repository.Repository
                 query = query.Where(b => b.Name.Contains(name));
             return await query.ToListAsync();
         }
+
+
+
+        public async Task AddAsync(Brand brand)
+        {
+            await _context.Brands.AddAsync(brand);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateAsync(Brand brand)
+        {
+            var existingBrand = await _context.Brands.FindAsync(brand.Id);
+            if (existingBrand != null)
+            {
+                existingBrand.Name = brand.Name;
+                existingBrand.Description = brand.Description;
+                // Nếu có thêm các quan hệ hay logic khác thì xử lý tại đây.
+
+                _context.Brands.Update(existingBrand);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var brand = await _context.Brands.FindAsync(id);
+            if (brand != null)
+            {
+                _context.Brands.Remove(brand);
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }

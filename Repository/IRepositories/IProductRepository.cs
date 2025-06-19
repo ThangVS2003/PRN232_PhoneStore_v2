@@ -14,5 +14,12 @@ namespace Repository.IRepository
         Task<Product?> GetBySerialNumberAsync(string serialNumber);
         Task<List<Product>> GetProductsByVersionNameAsync(string versionName);
 
+
+
+        Task AddAsync(Product product);
+        Task UpdateAsync(Product product);
+        Task<Brand?> GetBrandByNameAsync(string brandName);
+
+        Task DeleteAsync(int id);
     }
 }
