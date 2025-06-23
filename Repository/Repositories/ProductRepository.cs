@@ -27,10 +27,17 @@ namespace Repository.Repository
         public async Task<Product> GetByIdAsync(int id)
         {
             var product = await _context.Products
+                .Include(p => p.ProductVariants)
+                    .ThenInclude(pv => pv.Color)
+                .Include(p => p.ProductVariants)
+                    .ThenInclude(pv => pv.Version)
                 .FirstOrDefaultAsync(p => p.Id == id && p.IsDeleted == false);
+
             Console.WriteLine($"GetByIdAsync: ProductId {id} {(product != null ? "found" : "not found")}");
             return product;
         }
+
+
 
         public async Task<List<Product>> SearchAsync(string? name, int? brandId, decimal? minPrice, decimal? maxPrice)
         {
