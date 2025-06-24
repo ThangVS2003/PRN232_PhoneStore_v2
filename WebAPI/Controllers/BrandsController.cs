@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using BusinessObject.Models;
 using Service.IService;
 using System.Threading.Tasks;
+using PhoneStoreAPI.Models;
 
 namespace PhoneStoreAPI.Controllers
 {
@@ -40,6 +41,58 @@ namespace PhoneStoreAPI.Controllers
         {
             var brands = await _brandService.SearchAsync(name);
             return Ok(brands);
+        }
+
+
+
+
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] BrandDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var brand = new Brand
+            {
+                Name = dto.Name,
+                Description = dto.Description
+            };
+
+            await _brandService.AddAsync(brand);
+
+            dto.Id = brand.Id; // Gán lại id sau khi lưu
+
+            return CreatedAtAction(nameof(Get), new { id = dto.Id }, dto);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] BrandDto dto)
+        {
+            if (id != dto.Id)
+                return BadRequest("ID mismatch");
+
+            var existingBrand = await _brandService.GetByIdAsync(id);
+            if (existingBrand == null)
+                return NotFound();
+
+            // Cập nhật 3 thuộc tính
+            existingBrand.Name = dto.Name;
+            existingBrand.Description = dto.Description;
+
+            await _brandService.UpdateAsync(existingBrand);
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var existingBrand = await _brandService.GetByIdAsync(id);
+            if (existingBrand == null)
+                return NotFound();
+
+            await _brandService.DeleteAsync(id);
+            return NoContent();
         }
     }
 }

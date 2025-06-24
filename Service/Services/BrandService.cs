@@ -1,6 +1,7 @@
 ﻿// Service/Service/BrandService.cs
 using BusinessObject.Models;
 using Repository.IRepository;
+using Repository.Repository;
 using Service.IService;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -29,6 +30,21 @@ namespace Service.Service
         public async Task<List<Brand>> SearchAsync(string name)
         {
             return await _brandRepository.SearchAsync(name);
+        }
+
+        public async Task AddAsync(Brand brand)
+        {
+            await _brandRepository.AddAsync(brand);
+        }
+
+        public async Task UpdateAsync(Brand brand)
+        {
+            await _brandRepository.UpdateAsync(brand);
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            await _brandRepository.DeleteAsync(id);
         }
     }
 }

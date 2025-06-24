@@ -47,5 +47,26 @@ namespace Service.Service
             return await _productRepository.GetProductsByVersionNameAsync(versionName);
         }
 
+
+
+        public async Task AddAsync(Product product)
+        {
+            await _productRepository.AddAsync(product);
+        }
+
+        public async Task UpdateAsync(Product product)
+        {
+            await _productRepository.UpdateAsync(product);
+        }
+
+        public async Task<Brand?> GetBrandByNameAsync(string brandName)
+        {
+            return await _productRepository.GetBrandByNameAsync(brandName);
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            await _productRepository.DeleteAsync(id);
+        }
     }
 }
