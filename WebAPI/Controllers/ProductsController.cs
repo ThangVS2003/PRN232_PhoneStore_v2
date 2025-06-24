@@ -119,5 +119,102 @@ namespace PhoneStoreAPI.Controllers
                 return NotFound($"No products found for version: {versionName}");
             return Ok(products);
         }
+
+
+
+
+
+
+        [HttpGet("{id}")]
+        private async Task<IActionResult> GetById2(int id)
+        {
+            var product = await _productService.GetByIdAsync(id);
+            if (product == null) return NotFound();
+
+            var result = new ProductDto
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                MainImage = product.MainImage,
+                BrandName = product.Brand?.Name
+            };
+
+            return Ok(result);
+        }
+
+        // POST: api/Product
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] ProductCreateDto dto)
+        {
+            var brand = await _productService.GetBrandByNameAsync(dto.BrandName);
+            if (brand == null)
+                return BadRequest("Brand không tồn tại.");
+
+            var product = new Product
+            {
+                Name = dto.Name,
+                Description = dto.Description,
+                MainImage = dto.MainImage,
+                BrandId = brand.Id,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _productService.AddAsync(product);
+
+            // Trả về DTO đơn giản, tránh vòng lặp
+            var result = new ProductDto
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                MainImage = product.MainImage,
+                BrandName = brand.Name
+            };
+
+            return CreatedAtAction(nameof(GetById2), new { id = product.Id }, result);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] ProductDto dto)
+        {
+            if (id != dto.Id)
+                return BadRequest("ID không khớp.");
+
+            var product = await _productService.GetByIdAsync(id);
+            if (product == null)
+                return NotFound();
+
+            // Gán lại các thuộc tính
+            product.Name = dto.Name;
+            product.Description = dto.Description;
+            product.MainImage = dto.MainImage;
+
+            // Nếu muốn cập nhật Brand thông qua BrandName:
+            if (!string.IsNullOrEmpty(dto.BrandName))
+            {
+                // Tìm Brand theo tên (giả sử bạn có BrandRepository hoặc context)
+                var brand = await _productService.GetBrandByNameAsync(dto.BrandName);
+                if (brand == null)
+                    return BadRequest("Brand không tồn tại.");
+                product.BrandId = brand.Id;
+            }
+
+            await _productService.UpdateAsync(product);
+
+            return NoContent();
+        }
+
+        // DELETE: api/Product/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var existing = await _productService.GetByIdAsync(id);
+            if (existing == null)
+                return NotFound();
+
+            await _productService.DeleteAsync(id);
+            return NoContent();
+        }
     }
 }
