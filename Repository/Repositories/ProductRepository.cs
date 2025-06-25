@@ -31,6 +31,8 @@ namespace Repository.Repository
                     .ThenInclude(pv => pv.Color)
                 .Include(p => p.ProductVariants)
                     .ThenInclude(pv => pv.Version)
+                    .Include(p=>p.FeedbackProducts)
+                .ThenInclude(f => f.User)
                 .FirstOrDefaultAsync(p => p.Id == id && p.IsDeleted == false);
 
             Console.WriteLine($"GetByIdAsync: ProductId {id} {(product != null ? "found" : "not found")}");

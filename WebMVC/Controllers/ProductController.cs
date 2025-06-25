@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
 using System.Text.Json;
-using System.Threading.Tasks;
 using WebMVC.Models;
 
-namespace WebMVC.Controllers
+                using System.Net.Http;
+                using System.Text.Json;
+                using System.Threading.Tasks;
+                using WebMVC.Models;
+
+                namespace WebMVC.Controllers
 {
     public class ProductController : Controller
     {
@@ -16,7 +19,8 @@ namespace WebMVC.Controllers
             _httpClient.BaseAddress = new Uri("https://localhost:7026/api/");
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult>
+            Index()
         {
             var response = await _httpClient.GetAsync("products");
             if (!response.IsSuccessStatusCode)
