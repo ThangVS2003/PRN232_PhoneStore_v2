@@ -94,12 +94,18 @@ namespace PhoneStoreAPI
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IBrandRepository, BrandRepository>();
             builder.Services.AddScoped<IProductRepository, ProductRepository>();
+            builder.Services.AddScoped<ISerialRepository, SerialRepository>();
+            builder.Services.AddScoped<IColorRepository, ColorRepository>();
+            builder.Services.AddScoped<IVersionRepository, VersionRepository>();
 
             // Register Services
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IBrandService, BrandService>();
             builder.Services.AddScoped<IProductService, ProductService>();
+            builder.Services.AddScoped<ISerialService, SerialService>();
+            builder.Services.AddScoped<IColorService, ColorService>();
+            builder.Services.AddScoped<IVersionService, VersionService>();
 
             var app = builder.Build();
 

@@ -124,25 +124,6 @@ namespace PhoneStoreAPI.Controllers
 
 
 
-
-        [HttpGet("{id}")]
-        private async Task<IActionResult> GetById2(int id)
-        {
-            var product = await _productService.GetByIdAsync(id);
-            if (product == null) return NotFound();
-
-            var result = new ProductDto
-            {
-                Id = product.Id,
-                Name = product.Name,
-                Description = product.Description,
-                MainImage = product.MainImage,
-                BrandName = product.Brand?.Name
-            };
-
-            return Ok(result);
-        }
-
         // POST: api/Product
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ProductCreateDto dto)
@@ -157,7 +138,8 @@ namespace PhoneStoreAPI.Controllers
                 Description = dto.Description,
                 MainImage = dto.MainImage,
                 BrandId = brand.Id,
-                CreatedAt = DateTime.UtcNow
+                //CreatedAt = DateTime.UtcNow
+                IsDeleted = false
             };
 
             await _productService.AddAsync(product);
@@ -172,7 +154,7 @@ namespace PhoneStoreAPI.Controllers
                 BrandName = brand.Name
             };
 
-            return CreatedAtAction(nameof(GetById2), new { id = product.Id }, result);
+            return CreatedAtAction(nameof(GetById), new { id = product.Id }, result);
         }
 
         [HttpPut("{id}")]
@@ -214,7 +196,7 @@ namespace PhoneStoreAPI.Controllers
                 return NotFound();
 
             await _productService.DeleteAsync(id);
-            return NoContent();
+            return Ok("Đã xóa thành công");
         }
     }
 }
