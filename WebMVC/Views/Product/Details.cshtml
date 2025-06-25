@@ -43,7 +43,7 @@
                                 var defaultVersion = firstValidVariant?.Version ?? "N/A";
                                 var defaultVariant = Model.Variants?.FirstOrDefault(v => v.Color == defaultColor && v.Version == defaultVersion && v.SellingPrice > 0 && v.StockQuantity > 0);
                                 var defaultSellingPrice = defaultVariant?.SellingPrice ?? 0;
-                                var defaultOriginalPrice = defaultVariant?.OriginalPrice ?? 0;
+                                var maxQuantity = defaultVariant != null && defaultVariant.StockQuantity > 0 ? defaultVariant.StockQuantity - 1 : 0;
                             }
                         </div>
                         <p>@Model.Description</p>
@@ -90,18 +90,20 @@
                                 </div>
                                 <!-- Variant Info Display -->
                                 <div class="variant-info mt-2">
-                                    <p><strong>Selected Variant:</strong> <span id="selected-variant">Color: @firstValidColor, Version: @firstValidVersion</span></p>
-                                    <p>
+                                    <p class="variant-info-text"><strong>Selected Variant:</strong> <span id="selected-variant">Color: @firstValidColor, Version: @firstValidVersion</span></p>
+                                    <p class="variant-info-text">
                                         <strong>Price:</strong>
-                                        <span class="l-through mr-2" id="variant-original-price">$@defaultOriginalPrice</span>
                                         <span class="price-selling" id="variant-price">$@defaultSellingPrice</span>
                                     </p>
-                                    <p><strong>Stock:</strong> <span id="variant-stock">@(defaultVariant?.StockQuantity ?? 0)</span></p>
+                                    <p class="variant-info-text"><strong>Stock:</strong> <span id="variant-stock">@(defaultVariant?.StockQuantity ?? 0)</span></p>
+                                    <div class="quantity-section mb-3">
+                                        <h5>Quantity</h5>
+                                        <input type="number" name="quantity" id="quantity-input" min="1" max="@maxQuantity" value="1" class="quantity-input" />
+                                    </div>
                                 </div>
                                 <div class="product-actions mt-3">
                                     <button type="submit" class="primary-btn">Add to Cart</button>
-                                    <a href="@Url.Action("AddToWishlist", "Wishlist", new { id = Model.Id })" class="social-info">
-                                    </a>
+                                    <a href="@Url.Action("AddToWishlist", "Wishlist", new { id = Model.Id })" class="social-info"></a>
                                 </div>
                             </form>
                         </div>
@@ -172,8 +174,7 @@
                 version = v.Version ?? "N/A",
                 sellingPrice = v.SellingPrice,
                 stockQuantity = v.StockQuantity,
-                image = v.Image,
-                originalPrice = v.OriginalPrice
+                image = v.Image
             }) ?? Enumerable.Empty<object>()));
 
                 console.log('Variants:', variants);
@@ -278,7 +279,8 @@
                         jQuery('#selected-variant').text('Color: ' + selectedColor + ', Version: ' + selectedVersion);
                         jQuery('#variant-price').text(variant.sellingPrice);
                         jQuery('#variant-stock').text(variant.stockQuantity);
-                        jQuery('#variant-original-price').text(variant.originalPrice);
+                        jQuery('#quantity-input').attr('max', variant.stockQuantity > 0 ? variant.stockQuantity - 1 : 0);
+                        jQuery('#quantity-input').val(1); // Reset quantity to 1 when variant changes
                         jQuery('#add-to-cart-form button').prop('disabled', false);
                         console.log('Valid variant selected:', variant);
                     } else {
@@ -286,7 +288,8 @@
                         jQuery('#selected-variant').text('Invalid combination');
                         jQuery('#variant-price').text('0');
                         jQuery('#variant-stock').text('0');
-                        jQuery('#variant-original-price').text('0');
+                        jQuery('#quantity-input').attr('max', 0);
+                        jQuery('#quantity-input').val(1);
                         jQuery('#add-to-cart-form button').prop('disabled', true);
                         console.log('Invalid variant combination');
                     }
@@ -300,6 +303,18 @@
                     jQuery('#main-product-image').attr('src', newImage);
                     console.log('Updated image to:', newImage);
                 }
+
+                // Handle quantity input validation
+                jQuery('#quantity-input').on('input change', function () {
+                    var max = parseInt(jQuery(this).attr('max')) || 0;
+                    var val = parseInt(jQuery(this).val()) || 1;
+                    if (val < 1) {
+                        jQuery(this).val(1);
+                    } else if (val > max) {
+                        jQuery(this).val(max);
+                    }
+                    console.log('Quantity updated:', jQuery(this).val());
+                });
 
                 // Initialize with first valid combination
                 var firstValidVariant = variants.find(v => v.sellingPrice > 0 && v.stockQuantity > 0);
@@ -329,64 +344,128 @@
     </script>
     <style>
         .variant-box {
-            border: 1px solid #ddd;
-            padding: 10px 15px;
-            border-radius: 5px;
-            transition: all 0.3s;
-            margin-right: 10px;
-            margin-bottom: 10px;
+            border: 2px solid #ccc;
+            padding: 12px 18px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            font-weight: 500;
+            font-size: 1rem;
         }
+
+        .product-main-img img {
+            transition: all 0.3s ease-in-out;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
 
             .variant-box:not(.disabled) {
                 cursor: pointer;
             }
 
                 .variant-box:not(.disabled):hover {
-                    background-color: #f8f8f8;
+                    border-color: #ffba00;
+                    background-color: #fff9e6;
                 }
 
             .variant-box.selected:not(.disabled) {
-                border-color: #ffba00;
+                border-color: #ffa500;
                 background-color: #fff3cd;
+                color: #000;
             }
 
             .variant-box.disabled {
                 opacity: 0.5;
                 cursor: not-allowed;
                 background-color: #f0f0f0;
+                color: #999;
             }
 
         .variant-section h5 {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: #333;
         }
 
         .variant-info p {
-            margin-bottom: 5px;
+            margin-bottom: 6px;
+            color: #444;
         }
 
-        .l-through {
-            text-decoration: line-through;
-            color: #888;
-            margin-right: 10px;
+        .variant-info-text {
+            font-size: 1.1em;
+            margin: 8px 0;
         }
 
         .price-selling {
-            font-size: 1.5em;
-            color: #000;
+            font-size: 2em;
+            color: #e74c3c;
             font-weight: bold;
         }
 
         .product-price {
             display: flex;
             align-items: baseline;
+            margin-bottom: 15px;
         }
 
         .feedback-item {
-            background-color: #f9f9f9;
+            background-color: #fafafa;
+            border-left: 4px solid #ffba00;
+            padding: 15px;
+            border-radius: 8px;
+            transition: background 0.3s;
         }
+
+            .feedback-item:hover {
+                background-color: #fffbe6;
+            }
 
         .rating .fa-star {
             font-size: 1.2em;
+            margin-left: 2px;
         }
+
+        .quantity-section {
+            margin-top: 10px;
+        }
+
+        .quantity-input {
+            width: 90px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1.1em;
+        }
+
+        .primary-btn {
+            background-color: #ffba00;
+            color: #fff;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+
+            .primary-btn:hover {
+                background-color: #e6a800;
+                color: #fff;
+            }
+
+        .product-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
     </style>
 }
