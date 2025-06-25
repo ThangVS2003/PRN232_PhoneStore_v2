@@ -38,10 +38,10 @@
                         <h2>@Model.Name</h2>
                         <div class="product-price">
                             @{
-                                var firstValidVariant = Model.Variants.FirstOrDefault(v => v.SellingPrice > 0 && v.StockQuantity > 0);
-                                var defaultColor = Model.Variants.FirstOrDefault(v => v.SellingPrice > 0 && v.StockQuantity > 0)?.Color ?? "N/A";
-                                var defaultVersion = Model.Variants.FirstOrDefault(v => v.SellingPrice > 0 && v.StockQuantity > 0)?.Version ?? "N/A";
-                                var defaultVariant = Model.Variants.FirstOrDefault(v => v.Color == defaultColor && v.Version == defaultVersion && v.SellingPrice > 0 && v.StockQuantity > 0);
+                                var firstValidVariant = Model.Variants?.FirstOrDefault(v => v.SellingPrice > 0 && v.StockQuantity > 0);
+                                var defaultColor = firstValidVariant?.Color ?? "N/A";
+                                var defaultVersion = firstValidVariant?.Version ?? "N/A";
+                                var defaultVariant = Model.Variants?.FirstOrDefault(v => v.Color == defaultColor && v.Version == defaultVersion && v.SellingPrice > 0 && v.StockQuantity > 0);
                                 var defaultSellingPrice = defaultVariant?.SellingPrice ?? 0;
                                 var defaultOriginalPrice = defaultVariant?.OriginalPrice ?? 0;
                             }
@@ -57,9 +57,8 @@
                                     <h5>Color</h5>
                                     <div class="variant-boxes d-flex flex-wrap">
                                         @{
-                                            var allColors = Model.Variants.Select(v => v.Color ?? "N/A").Distinct().ToList();
-                                            var firstValidColor = Model.Variants
-                                            .FirstOrDefault(v => v.SellingPrice > 0 && v.StockQuantity > 0)?.Color ?? allColors.FirstOrDefault();
+                                            var allColors = Model.Variants?.Select(v => v.Color ?? "N/A").Distinct().ToList() ?? new List<string>();
+                                            var firstValidColor = firstValidVariant?.Color ?? allColors.FirstOrDefault();
                                             foreach (var color in allColors)
                                             {
                                                 <div class="variant-box color-box @(color == firstValidColor ? "selected" : "")"
@@ -76,9 +75,8 @@
                                     <h5>Version</h5>
                                     <div class="variant-boxes d-flex flex-wrap">
                                         @{
-                                            var allVersions = Model.Variants.Select(v => v.Version ?? "N/A").Distinct().ToList();
-                                            var firstValidVersion = Model.Variants
-                                            .FirstOrDefault(v => v.SellingPrice > 0 && v.StockQuantity > 0)?.Version ?? allVersions.FirstOrDefault();
+                                            var allVersions = Model.Variants?.Select(v => v.Version ?? "N/A").Distinct().ToList() ?? new List<string>();
+                                            var firstValidVersion = firstValidVariant?.Version ?? allVersions.FirstOrDefault();
                                             foreach (var version in allVersions)
                                             {
                                                 <div class="variant-box version-box @(version == firstValidVersion ? "selected" : "")"
@@ -103,13 +101,49 @@
                                 <div class="product-actions mt-3">
                                     <button type="submit" class="primary-btn">Add to Cart</button>
                                     <a href="@Url.Action("AddToWishlist", "Wishlist", new { id = Model.Id })" class="social-info">
-                                      
-                                       
                                     </a>
                                 </div>
                             </form>
                         </div>
                     </div>
+                </div>
+            </div>
+            <!-- Feedback Section -->
+            <div class="row mt-5">
+                <div class="col-12">
+                    <h4>Feedback</h4>
+                    @if (Model.Feedbacks != null && Model.Feedbacks.Any())
+                    {
+                        <div class="feedback-list">
+                            @foreach (var feedback in Model.Feedbacks)
+                            {
+                                <div class="feedback-item mb-4 p-3 border rounded">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5>@(string.IsNullOrEmpty(feedback.UserName) ? "Anonymous" : feedback.UserName)</h5>
+                                        <div class="rating">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                if (i <= feedback.Rating)
+                                                {
+                                                    <span class="fa fa-star text-warning"></span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="fa fa-star text-muted"></span>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                    <p class="mb-1">@(string.IsNullOrEmpty(feedback.Comment) ? "No comment provided." : feedback.Comment)</p>
+                                    <small class="text-muted">@(feedback.CreatedAt?.ToString("MMM dd, yyyy HH:mm") ?? "N/A")</small>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p>No feedback available for this product.</p>
+                    }
                 </div>
             </div>
         }
@@ -128,8 +162,10 @@
     <script>
         if (typeof jQuery !== 'undefined') {
             jQuery(document).ready(function () {
+                console.log('jQuery loaded, initializing variant selection.');
+
                 // Variant data from Model
-                var variants = @Html.Raw(Json.Serialize(Model.Variants.Select(v => new
+                var variants = @Html.Raw(Json.Serialize(Model?.Variants?.Select(v => new
             {
                 id = v.Id,
                 color = v.Color ?? "N/A",
@@ -138,11 +174,14 @@
                 stockQuantity = v.StockQuantity,
                 image = v.Image,
                 originalPrice = v.OriginalPrice
-            })));
+            }) ?? Enumerable.Empty<object>()));
+
+                console.log('Variants:', variants);
 
                 // Update available versions based on selected color
                 function updateVersions() {
                     var selectedColor = jQuery('.color-box.selected').data('color');
+                    console.log('Selected Color:', selectedColor);
                     var allVersions = variants.map(v => v.version).filter((v, i, a) => a.indexOf(v) === i); // Unique versions
                     var validVersions = variants
                         .filter(v => v.color === selectedColor && v.sellingPrice > 0 && v.stockQuantity > 0)
@@ -152,12 +191,17 @@
                         var version = jQuery(this).data('version');
                         if (validVersions.includes(version)) {
                             jQuery(this).removeClass('disabled');
+                            console.log('Enabled version:', version);
                         } else {
                             jQuery(this).addClass('disabled');
+                            console.log('Disabled version:', version);
                             if (jQuery(this).hasClass('selected')) {
                                 jQuery(this).removeClass('selected');
                                 var firstValid = jQuery('.version-box:not(.disabled)').first();
-                                if (firstValid.length) firstValid.addClass('selected');
+                                if (firstValid.length) {
+                                    firstValid.addClass('selected');
+                                    console.log('Selected first valid version:', firstValid.data('version'));
+                                }
                             }
                         }
                     });
@@ -169,6 +213,7 @@
                 // Update available colors based on selected version
                 function updateColors() {
                     var selectedVersion = jQuery('.version-box.selected').data('version');
+                    console.log('Selected Version:', selectedVersion);
                     var allColors = variants.map(v => v.color).filter((v, i, a) => a.indexOf(v) === i); // Unique colors
                     var validColors = variants
                         .filter(v => v.version === selectedVersion && v.sellingPrice > 0 && v.stockQuantity > 0)
@@ -178,12 +223,17 @@
                         var color = jQuery(this).data('color');
                         if (validColors.includes(color)) {
                             jQuery(this).removeClass('disabled');
+                            console.log('Enabled color:', color);
                         } else {
                             jQuery(this).addClass('disabled');
+                            console.log('Disabled color:', color);
                             if (jQuery(this).hasClass('selected')) {
                                 jQuery(this).removeClass('selected');
                                 var firstValid = jQuery('.color-box:not(.disabled)').first();
-                                if (firstValid.length) firstValid.addClass('selected');
+                                if (firstValid.length) {
+                                    firstValid.addClass('selected');
+                                    console.log('Selected first valid color:', firstValid.data('color'));
+                                }
                             }
                         }
                     });
@@ -194,7 +244,11 @@
 
                 // Handle color box click
                 jQuery('.color-box').click(function () {
-                    if (jQuery(this).hasClass('disabled')) return;
+                    if (jQuery(this).hasClass('disabled')) {
+                        console.log('Clicked disabled color box, ignoring.');
+                        return;
+                    }
+                    console.log('Clicked color box:', jQuery(this).data('color'));
                     jQuery('.color-box').removeClass('selected');
                     jQuery(this).addClass('selected');
                     updateVersions();
@@ -202,7 +256,11 @@
 
                 // Handle version box click
                 jQuery('.version-box').click(function () {
-                    if (jQuery(this).hasClass('disabled')) return;
+                    if (jQuery(this).hasClass('disabled')) {
+                        console.log('Clicked disabled version box, ignoring.');
+                        return;
+                    }
+                    console.log('Clicked version box:', jQuery(this).data('version'));
                     jQuery('.version-box').removeClass('selected');
                     jQuery(this).addClass('selected');
                     updateColors();
@@ -212,6 +270,7 @@
                 function updateVariant() {
                     var selectedColor = jQuery('.color-box.selected').data('color');
                     var selectedVersion = jQuery('.version-box.selected').data('version');
+                    console.log('Updating variant - Color:', selectedColor, 'Version:', selectedVersion);
 
                     var variant = variants.find(v => v.color === selectedColor && v.version === selectedVersion && v.sellingPrice > 0 && v.stockQuantity > 0);
                     if (variant) {
@@ -221,6 +280,7 @@
                         jQuery('#variant-stock').text(variant.stockQuantity);
                         jQuery('#variant-original-price').text(variant.originalPrice);
                         jQuery('#add-to-cart-form button').prop('disabled', false);
+                        console.log('Valid variant selected:', variant);
                     } else {
                         jQuery('#variantId').val('');
                         jQuery('#selected-variant').text('Invalid combination');
@@ -228,6 +288,7 @@
                         jQuery('#variant-stock').text('0');
                         jQuery('#variant-original-price').text('0');
                         jQuery('#add-to-cart-form button').prop('disabled', true);
+                        console.log('Invalid variant combination');
                     }
                 }
 
@@ -235,8 +296,9 @@
                 function updateImage() {
                     var selectedColor = jQuery('.color-box.selected').data('color');
                     var variantWithImage = variants.find(v => v.color === selectedColor && v.sellingPrice > 0 && v.stockQuantity > 0);
-                    var newImage = variantWithImage ? variantWithImage.image : '@(Model.MainImage ?? Url.Content("~/Content/img/product/p1.jpg"))';
+                    var newImage = variantWithImage ? variantWithImage.image : '@(Model?.MainImage ?? Url.Content("~/Content/img/product/p1.jpg"))';
                     jQuery('#main-product-image').attr('src', newImage);
+                    console.log('Updated image to:', newImage);
                 }
 
                 // Initialize with first valid combination
@@ -244,7 +306,11 @@
                 if (firstValidVariant) {
                     jQuery('.color-box[data-color="' + firstValidVariant.color + '"]').addClass('selected');
                     jQuery('.version-box[data-version="' + firstValidVariant.version + '"]').addClass('selected');
+                    console.log('Initialized with variant:', firstValidVariant);
+                } else {
+                    console.log('No valid variants found.');
                 }
+
                 updateVersions();
                 updateColors();
                 updateImage();
@@ -252,7 +318,9 @@
 
                 // Image gallery switching
                 jQuery('.product-gallery img').click(function () {
-                    jQuery('#main-product-image').attr('src', jQuery(this).attr('src'));
+                    var src = jQuery(this).attr('src');
+                    jQuery('#main-product-image').attr('src', src);
+                    console.log('Gallery image switched to:', src);
                 });
             });
         } else {
@@ -297,7 +365,7 @@
         }
 
         .l-through {
-            text-decoration: line-through; 
+            text-decoration: line-through;
             color: #888;
             margin-right: 10px;
         }
@@ -311,6 +379,14 @@
         .product-price {
             display: flex;
             align-items: baseline;
+        }
+
+        .feedback-item {
+            background-color: #f9f9f9;
+        }
+
+        .rating .fa-star {
+            font-size: 1.2em;
         }
     </style>
 }

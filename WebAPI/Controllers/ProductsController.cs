@@ -42,6 +42,14 @@ namespace PhoneStoreAPI.Controllers
                         v.OriginalPrice,
                         v.StockQuantity,
                         v.Image
+                    }),
+                    Feedbacks = product.FeedbackProducts
+                    .Select(f => new
+                    {
+                        f.Comment,
+                        f.Rating,
+                        f.CreatedAt,
+                        Username = f.User?.Name
                     })
             };
 
