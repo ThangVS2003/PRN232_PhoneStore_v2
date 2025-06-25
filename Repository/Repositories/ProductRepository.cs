@@ -137,7 +137,9 @@ namespace Repository.Repository
             var product = await _context.Products.FindAsync(id);
             if (product != null)
             {
-                _context.Products.Remove(product);
+                product.IsDeleted = true;
+                product.DeletedAt = DateTime.Now;
+                product.DeletedBy = "System"; // Hoặc lấy từ context người dùng nếu có
                 await _context.SaveChangesAsync();
             }
         }
