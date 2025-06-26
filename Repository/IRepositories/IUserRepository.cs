@@ -11,5 +11,11 @@ namespace Repository.IRepository
         Task<User> GetByIdAsync(int id);
         Task<User> GetByUsernameAsync(string username);
         Task<List<User>> SearchAsync(string username, string email, int? role);
+
+
+
+        Task AddAsync(User user);
+        Task UpdateAsync(User user);
+        Task DeleteAsync(int id);
     }
 }
