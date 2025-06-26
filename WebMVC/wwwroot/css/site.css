@@ -1,22 +1,111 @@
+﻿/* PhoneStoreMVC/wwwroot/css/site.css */
 html {
-  font-size: 14px;
+    font-size: 14px;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+    html {
+        font-size: 16px;
+    }
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
 html {
-  position: relative;
-  min-height: 100%;
+    position: relative;
+    min-height: 100%;
 }
 
 body {
-  margin-bottom: 60px;
+    margin-bottom: 60px;
+    padding-top: 70px; /* Adjust based on header height */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
+
+main {
+    flex: 1 0 auto;
+}
+
+/* Header specific styles */
+.header_area {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background-color: #ffffff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.main_menu .navbar {
+    padding: 10px 0;
+}
+
+.main_box {
+    padding: 0 15px;
+}
+
+.logo_h img {
+    max-height: 50px;
+}
+
+.navbar-toggler {
+    border: none;
+}
+
+.icon-bar {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background-color: #333;
+    margin: 4px 0;
+}
+
+.offset {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.menu_nav .nav-item {
+    margin-right: 15px;
+}
+
+.menu_nav .nav-link {
+    color: #333;
+    font-weight: 500;
+    padding: 10px 15px;
+}
+
+    .menu_nav .nav-link:hover,
+    .menu_nav .nav-link.active {
+        color: #007bff;
+    }
+
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item {
+    padding: 10px 20px;
+}
+
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+
+.navbar-right .nav-item {
+    margin-left: 15px;
+}
+
+.cart, .search {
+    color: #333;
+    font-size: 18px;
+    padding: 10px;
+}
+
+    .cart:hover, .search:hover {
+        color: #007bff;
+    }
