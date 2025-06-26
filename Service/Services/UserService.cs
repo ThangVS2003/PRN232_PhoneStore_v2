@@ -35,5 +35,23 @@ namespace Service.Service
         {
             return await _userRepository.SearchAsync(username, email, role);
         }
+
+
+
+
+        public async Task AddAsync(User user)
+        {
+            await _userRepository.AddAsync(user);
+        }
+
+        public async Task UpdateAsync(User user)
+        {
+            await _userRepository.UpdateAsync(user);
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            await _userRepository.DeleteAsync(id);
+        }
     }
 }

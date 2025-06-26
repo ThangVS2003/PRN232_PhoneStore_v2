@@ -97,6 +97,7 @@ namespace PhoneStoreAPI
             builder.Services.AddScoped<ISerialRepository, SerialRepository>();
             builder.Services.AddScoped<IColorRepository, ColorRepository>();
             builder.Services.AddScoped<IVersionRepository, VersionRepository>();
+            builder.Services.AddScoped<IProductVariantRepository, ProductVariantRepository>();
 
             // Register Services
             builder.Services.AddScoped<IUserService, UserService>();
@@ -106,6 +107,7 @@ namespace PhoneStoreAPI
             builder.Services.AddScoped<ISerialService, SerialService>();
             builder.Services.AddScoped<IColorService, ColorService>();
             builder.Services.AddScoped<IVersionService, VersionService>();
+            builder.Services.AddScoped<IProductVariantService, ProductVariantService>();
 
             var app = builder.Build();
 
