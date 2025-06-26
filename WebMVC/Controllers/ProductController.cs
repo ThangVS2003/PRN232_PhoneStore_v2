@@ -15,7 +15,7 @@ using WebMVC.Models;
 
         public ProductController(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClientFactory.CreateClient();
+            _httpClient = httpClientFactory.CreateClient("PhoneStoreAPI");
             _httpClient.BaseAddress = new Uri("https://localhost:7026/api/");
         }
 
