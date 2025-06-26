@@ -103,6 +103,8 @@ namespace PhoneStoreAPI
             builder.Services.AddScoped<IDepositHistoryRepository, DepositHistoryRepository>();
             builder.Services.AddScoped<IFeedbackOrderRepository, FeedbackOrderRepository>();
             builder.Services.AddScoped<IVoucherRepository, VoucherRepository>();
+            builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+            builder.Services.AddScoped<IOrderDetailRepository, OrderDetailRepository>();
 
             // Register Services
             builder.Services.AddScoped<IUserService, UserService>();
@@ -118,6 +120,8 @@ namespace PhoneStoreAPI
             builder.Services.AddScoped<IDepositHistoryService, DepositHistoryService>();
             builder.Services.AddScoped<IFeedbackOrderService, FeedbackOrderService>();
             builder.Services.AddScoped<IVoucherService, VoucherService>();
+            builder.Services.AddScoped<IOrderService, OrderService>();
+            builder.Services.AddScoped<IOrderDetailService, OrderDetailService>();
 
             var app = builder.Build();
 
