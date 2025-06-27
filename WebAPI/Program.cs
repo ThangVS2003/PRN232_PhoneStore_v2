@@ -8,6 +8,10 @@ using Service.IService;
 using Service.Service;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using Repository.IRepositories;
+using Repository.Repositories;
+using Service.IServices;
+using Service.Services;
 
 namespace PhoneStoreAPI
 {
@@ -106,6 +110,8 @@ namespace PhoneStoreAPI
             builder.Services.AddScoped<IOrderRepository, OrderRepository>();
             builder.Services.AddScoped<IOrderDetailRepository, OrderDetailRepository>();
 
+            //thangne
+            builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
             // Register Services
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
@@ -123,6 +129,9 @@ namespace PhoneStoreAPI
             builder.Services.AddScoped<IOrderService, OrderService>();
             builder.Services.AddScoped<IOrderDetailService, OrderDetailService>();
 
+            //thangne
+            builder.Services.AddScoped<IDashboardService, DashboardService>();
+            
             var app = builder.Build();
 
             // Configure the HTTP request pipeline

@@ -1,0 +1,238 @@
+﻿<!-- PhoneStoreMVC/Areas/Admin/Views/Dashboard/Dashboard.cshtml -->
+@{
+    ViewData["Title"] = "Bảng Thống Kê";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+@section naviheader {
+    <ul class="navbar-nav">
+        <li class="nav-item">
+            <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+        </li>
+    </ul>
+}
+
+<style>
+    .small-number {
+        font-size: 1.2rem !important;
+    }
+    .input-group {
+        margin-bottom: 10px;
+    }
+    .small-box .inner h3 {
+        line-height: 1.4;
+        margin-bottom: 0;
+    }
+</style>
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6"><h1>Bảng Thống Kê</h1></div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#">Home</a></li>
+                    <li class="breadcrumb-item active">Dashboard</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Số lượng người dùng -->
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3 class="small-number">@Model.UserCount</h3>
+                        <p>Số lượng người dùng</p>
+                    </div>
+                    <div class="icon"><i class="ion ion-person"></i></div>
+                </div>
+            </div>
+            <!-- Số lượng sản phẩm -->
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3 class="small-number">@Model.ProductCount</h3>
+                        <p>Số lượng sản phẩm</p>
+                    </div>
+                    <div class="icon"><i class="ion ion-cube"></i></div>
+                </div>
+            </div>
+            <!-- Số lượng đơn hàng -->
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-warning">
+                    <h3 class="small-number">@Model.OrderCount</h3>
+                    <p>Số lượng đơn hàng</p>
+                </div>
+            </div>
+            <!-- Tổng tiền bán được -->
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-danger">
+                    <div class="inner">
+                        <h3 class="small-number">@Model.TotalRevenue.ToString("N0") VNĐ</h3>
+                        <p>Tổng tiền bán được</p>
+                    </div>
+                    <div class="icon"><i class="ion ion-cash"></i></div>
+                </div>
+            </div>
+            <!-- Tiền nhập hàng -->
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-secondary">
+                    <div class="inner">
+                        <h3 class="small-number">@Model.TotalDeposit.ToString("N0") VNĐ</h3>
+                        <p>Tiền nhập hàng</p>
+                    </div>
+                    <div class="icon"><i class="ion ion-ios-cart"></i></div>
+                </div>
+            </div>
+            <!-- Tiền lãi -->
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3 class="small-number">@Model.Profit.ToString("N0") VNĐ</h3>
+                        <p>Tiền lãi</p>
+                    </div>
+                    <div class="icon"><i class="ion ion-stats-bars"></i></div>
+                </div>
+            </div>
+            <!-- Doanh thu -->
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3 class="small-number">@Model.RevenueBetweenDates.ToString("N0") VNĐ</h3>
+                        <p>Doanh thu</p>
+                    </div>
+                    <div class="icon"><i class="ion ion-calendar"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tìm kiếm tiền lãi theo thời gian -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Tìm kiếm tiền lãi theo thời gian</h3>
+                    </div>
+                    <div class="card-body">
+                        <form asp-action="Dashboard" asp-controller="Dashboard" asp-area="Admin" method="get" id="profitSearchForm">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Từ ngày:</label>
+                                        <input type="date" name="startDate" class="form-control" />
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Đến ngày:</label>
+                                        <input type="date" name="endDate" class="form-control" />
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label> </label>
+                                        <button type="submit" class="btn btn-primary">Submit</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        <div class="row" style="margin-top: 10px;">
+                            <div class="col-md-12">
+                                <div class="alert alert-info" id="profitResult" style="display: none;">
+                                    <strong>Tiền lãi trong khoảng thời gian:</strong> <span id="profitValue">0 VNĐ</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Sản Phẩm Bán Chạy -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h3 class="card-title">Top Sản Phẩm Bán Chạy</h3>
+                            </div>
+                            <div class="col-md-6 text-right">
+                                <div class="input-group" style="width: 150px; margin-top: 5px;">
+                                    <input type="number" id="topProductsInput" value="5" min="1" class="form-control" />
+                                    <span class="input-group-btn">
+                                        <button class="btn btn-default" type="button" onclick="updateTopProducts()">Cập nhật</button>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped" id="topProductsTable">
+                            <thead>
+                                <tr>
+                                    <th>Sản Phẩm</th>
+                                    <th>Hình Ảnh</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var product in Model.TopSellingProducts)
+                                {
+                                    <tr>
+                                        <td>@product.Name</td>
+                                        <td><img src="@(string.IsNullOrEmpty(product.MainImage) ? "/img/default.png" : product.MainImage)" alt="@product.Name" style="width: 50px;"></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    function updateTopProducts() {
+        var count = document.getElementById("topProductsInput").value;
+        var url = "/Admin/Dashboard?top=" + count;
+        window.location.href = url;
+    }
+
+    document.getElementById("profitSearchForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        var startDate = document.querySelector("input[name='startDate']").value;
+        var endDate = document.querySelector("input[name='endDate']").value;
+        var url = "/Admin/Dashboard/GetProfit?startDate=" + startDate + "&endDate=" + endDate;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById("profitValue").textContent = data.profit.toLocaleString() + " VNĐ";
+                    document.getElementById("profitResult").style.display = "block";
+                } else {
+                    document.getElementById("profitValue").textContent = "0 VNĐ";
+                    document.getElementById("profitResult").style.display = "block";
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                document.getElementById("profitValue").textContent = "0 VNĐ";
+                document.getElementById("profitResult").style.display = "block";
+            });
+    });
+
+    window.onload = function() {
+        var urlParams = new URLSearchParams(window.location.search);
+        var top = urlParams.get('top');
+        if (top) {
+            document.getElementById("topProductsInput").value = top;
+        }
+    };
+</script>

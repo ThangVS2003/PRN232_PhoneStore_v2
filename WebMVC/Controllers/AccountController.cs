@@ -41,18 +41,26 @@ namespace PhoneStoreMVC.Controllers
                     var handler = new JwtSecurityTokenHandler();
                     var token = handler.ReadJwtToken(result.Token);
 
+                    // Sử dụng role từ response body thay vì từ token
+                    int role = result.Role; // Lấy role từ response (1)
+                    Console.WriteLine($"Role from response: {role}"); // Debug giá trị role
+
                     var claims = new List<Claim>
                     {
                         new Claim(ClaimTypes.Name, model.Username),
-                        new Claim(ClaimTypes.Role, token.Claims.First(c => c.Type == ClaimTypes.Role).Value)
+                        new Claim(ClaimTypes.Role, role.ToString()) // Sử dụng role từ response
                     };
 
                     var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
 
-                    switch (result.Role)
+                    // Lưu vai trò vào session
+                    HttpContext.Session.SetString("Role", role.ToString());
+                    Console.WriteLine($"Session Role set to: {role}"); // Debug session
+
+                    switch (role)
                     {
-                        case 1: return RedirectToAction("Index", "Admin", new { area = "Admin" });
+                        case 1: return RedirectToAction("Dashboard", "Dashboard", new { area = "Admin" });
                         case 2: return RedirectToAction("Index", "Staff");
                         case 3: return RedirectToAction("Index", "Home");
                         default: return RedirectToAction("Index", "Home");
@@ -61,9 +69,10 @@ namespace PhoneStoreMVC.Controllers
                 ModelState.AddModelError(string.Empty, "Thông tin đăng nhập không đúng");
                 return View(model);
             }
-            catch
+            catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, "Đã xảy ra lỗi khi đăng nhập");
+                Console.WriteLine($"Error in Login: {ex.Message}"); // Debug lỗi cụ thể
+                ModelState.AddModelError(string.Empty, "Đã xảy ra lỗi khi đăng nhập: " + ex.Message);
                 return View(model);
             }
         }
@@ -101,6 +110,10 @@ namespace PhoneStoreMVC.Controllers
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            if (HttpContext.Session != null) // Kiểm tra session trước khi xóa
+            {
+                HttpContext.Session.Clear();
+            }
             return RedirectToAction("Index", "Home");
         }
     }
