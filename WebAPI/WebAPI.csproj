@@ -18,6 +18,7 @@
     <ProjectReference Include="..\BusinessObject\BusinessObject.csproj" />
     <ProjectReference Include="..\Repository\Repository.csproj" />
     <ProjectReference Include="..\Service\Service.csproj" />
+    <ProjectReference Include="..\WebMVC\WebMVC.csproj" />
   </ItemGroup>
 
 </Project>

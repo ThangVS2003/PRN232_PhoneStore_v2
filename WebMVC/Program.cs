@@ -13,7 +13,14 @@ namespace WebMVC
 
             // Add services to the container
             builder.Services.AddControllersWithViews();
-
+            // Thêm session
+            builder.Services.AddDistributedMemoryCache(); // Bắt buộc cho session
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(30); // Thời gian hết hạn session
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
             // Cấu hình HttpClient với handler bỏ qua chứng chỉ
             builder.Services.AddHttpClient("PhoneStoreAPI", client =>
             {
@@ -29,6 +36,9 @@ namespace WebMVC
         options.LogoutPath = "/Account/Logout";
         options.AccessDeniedPath = "/Account/AccessDenied";
     });
+            // Enable authorization
+            builder.Services.AddAuthorization();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline
@@ -41,7 +51,13 @@ namespace WebMVC
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
+
+            app.UseSession();
+            app.UseAuthentication();
             app.UseAuthorization();
+            app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Dashboard}/{action=Dashboard}/{id?}");
 
             app.MapControllerRoute(
                 name: "default",

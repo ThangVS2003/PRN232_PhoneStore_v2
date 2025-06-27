@@ -10,7 +10,6 @@ namespace PhoneStoreAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin,Staff")]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
