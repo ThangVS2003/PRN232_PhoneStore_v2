@@ -21,5 +21,6 @@ namespace Repository.IRepository
         Task<Brand?> GetBrandByNameAsync(string brandName);
 
         Task DeleteAsync(int id);
+        Task<List<Product>> GetByNameAndBrandIdAsync(string name, int brandId);
     }
 }

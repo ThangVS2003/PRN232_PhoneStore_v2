@@ -144,5 +144,21 @@ namespace Repository.Repository
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<List<Product>> GetByNameAndBrandIdAsync(string name, int brandId)
+        {
+            var query = _context.Products
+                .Where(p => p.IsDeleted == false);
+
+            if (!string.IsNullOrWhiteSpace(name))
+                query = query.Where(p => p.Name.Contains(name));
+
+            if (brandId != 0)
+                query = query.Where(p => p.BrandId == brandId);
+
+            return await query
+                .Include(p => p.Brand)
+                .ToListAsync();
+        }
     }
 }

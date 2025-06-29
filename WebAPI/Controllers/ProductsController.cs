@@ -152,7 +152,7 @@ namespace PhoneStoreAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ProductCreateDto dto)
         {
-            var brand = await _productService.GetBrandByNameAsync(dto.BrandName);
+            var brand = await _productService.GetBrandByNameAsync(dto.BrandName.Trim());
             if (brand == null)
                 return BadRequest("Brand không tồn tại.");
 
@@ -221,6 +221,26 @@ namespace PhoneStoreAPI.Controllers
 
             await _productService.DeleteAsync(id);
             return Ok("Đã xóa thành công");
+        }
+
+        [HttpGet("by-name-and-brand")]
+        public async Task<IActionResult> GetByNameAndBrandId([FromQuery] string? name, [FromQuery] int brandId)
+        {
+            var products = await _productService.GetByNameAndBrandIdAsync(name ?? "", brandId);
+            if (products == null || !products.Any())
+                return NotFound("Không tìm thấy sản phẩm phù hợp.");
+
+            var result = products.Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.Description,
+                p.MainImage,
+                BrandName = p.Brand?.Name ?? "Không rõ",
+                p.IsDeleted
+            });
+
+            return Ok(result);
         }
     }
 }

@@ -31,4 +31,27 @@
         public DateTime? CreatedAt { get; set; }
         public string UserName { get; set; }
     }
+
+    public class BrandViewModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+
+    public class ProductCreateViewModel
+    {
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string MainImage { get; set; }
+        public string BrandName { get; set; }
+    }
+
+    public class ProductUpdateViewModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = null!;
+        public string? Description { get; set; }
+        public string? MainImage { get; set; }
+        public string? BrandName { get; set; }
+    }
 }
