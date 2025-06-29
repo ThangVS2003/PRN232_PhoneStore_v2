@@ -19,6 +19,7 @@ namespace Repository.Repository
         {
             var products = await _context.Products
                 .Where(p => p.IsDeleted == false)
+                .Include(p => p.Brand)
                 .ToListAsync();
             Console.WriteLine($"GetAllAsync: Found {products.Count} products");
             return products;

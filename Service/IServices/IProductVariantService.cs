@@ -11,6 +11,7 @@ namespace Service.IService
     {
         Task<List<ProductVariant>> GetAllAsync();
         Task<ProductVariant> GetByIdAsync(int id);
+        Task<List<ProductVariant>> GetByProductIdAsync(int productId);
         Task AddAsync(ProductVariant productVariant);
         Task UpdateAsync(ProductVariant productVariant);
         Task DeleteAsync(int id);

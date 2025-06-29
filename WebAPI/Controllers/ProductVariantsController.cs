@@ -46,6 +46,28 @@ namespace PhoneStoreAPI.Controllers
             return Ok(variant);
         }
 
+        [HttpGet("by-product/{productId}")]
+        public async Task<IActionResult> GetByProductId(int productId)
+        {
+            var variants = await _productVariantService.GetByProductIdAsync(productId);
+            if (variants == null || !variants.Any())
+                return NotFound($"No product variants found for product ID {productId}");
+
+            var dtos = variants.Select(v => new ProductVariantDto
+            {
+                Id = v.Id,
+                ProductId = v.ProductId,
+                ColorId = v.ColorId,
+                VersionId = v.VersionId,
+                OriginalPrice = v.OriginalPrice,
+                SellingPrice = v.SellingPrice,
+                StockQuantity = v.StockQuantity,
+                Image = v.Image
+            }).ToList();
+
+            return Ok(dtos);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ProductVariantDto dto)
         {

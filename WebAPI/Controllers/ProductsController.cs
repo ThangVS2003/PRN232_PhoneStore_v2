@@ -58,11 +58,27 @@ namespace PhoneStoreAPI.Controllers
         }
 
         // Other actions remain unchanged
+        //[HttpGet]
+        //public async Task<IActionResult> Get()
+        //{
+        //    var products = await _productService.GetAllAsync();
+        //    return Ok(products);
+        //}
+
         [HttpGet]
         public async Task<IActionResult> Get()
         {
             var products = await _productService.GetAllAsync();
-            return Ok(products);
+            var result = products.Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.Description,
+                p.MainImage,
+                BrandName = p.Brand != null ? p.Brand.Name : "Không rõ",
+                p.IsDeleted
+            });
+            return Ok(result);
         }
 
         [HttpGet("by-brand/{brandId}")]

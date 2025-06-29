@@ -1,0 +1,78 @@
+﻿@model List<WebMVC.Models.ProductDetailViewModel>
+
+@{
+    ViewData["Title"] = "Bảng Sản phẩm";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Danh sách sản phẩm</h1>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="box">
+        <div class="box-header with-border">
+            <h3 class="box-title">Tất cả sản phẩm</h3>
+        </div>
+        <div class="box-body table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên</th>
+                        <th>Mô tả</th>
+                        <th>Hình ảnh chính</th>
+                        <th>Brand</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+                                <td>@item.Description</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.MainImage))
+                                    {
+                                        <img src="@item.MainImage" alt="Ảnh sản phẩm" width="80" height="80" />
+                                    }
+                                    else
+                                    {
+                                        <span>Không có ảnh</span>
+                                    }
+                                </td>
+                                <td>@item.BrandName</td>
+                                <td>
+                                    @if (item.IsDeleted)
+                                    {
+                                        <span class="label label-danger">Đã xóa</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="label label-success">Hoạt động</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center">Không có sản phẩm nào.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>

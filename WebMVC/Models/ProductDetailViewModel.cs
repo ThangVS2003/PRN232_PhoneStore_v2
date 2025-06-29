@@ -7,6 +7,7 @@
         public string Description { get; set; }
         public string MainImage { get; set; }
         public int BrandId { get; set; }
+        public string? BrandName { get; set; }
         public bool IsDeleted { get; set; }
         public List<ProductVariantViewModel> Variants { get; set; }
         public List<ProductFeedbackViewModel> Feedbacks { get; set; }
