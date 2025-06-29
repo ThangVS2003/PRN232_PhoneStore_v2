@@ -1,5 +1,4 @@
-﻿<!-- PhoneStoreMVC/Views/Shared/_Header.cshtml -->
-<header class="header_area sticky-header">
+﻿<header class="header_area sticky-header">
     <div class="main_menu">
         <nav class="navbar navbar-expand-lg navbar-light main_box">
             <div class="container">
@@ -13,36 +12,37 @@
                 <!-- Collect the nav links, forms, and other content for toggling -->
                 <div class="collapse navbar-collapse offset" id="navbarSupported">
                     <ul class="nav navbar-nav menu_nav ml-auto">
-                        <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-                        <li class="nav-item submenu dropdown active">
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Home</a></li>
+                        <li class="nav-item submenu dropdown">
                             <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Shop</a>
                             <ul class="dropdown-menu">
-                                <li class="nav-item active"><a class="nav-link" href="/Shop">Shop Category</a></li>
-                                <li class="nav-item"><a class="nav-link" href="/Shop/Details">Product Details</a></li>
-                                <li class="nav-item"><a class="nav-link" href="/Shop/Checkout">Product Checkout</a></li>
-                                <li class="nav-item"><a class="nav-link" href="/Shop/Cart">Shopping Cart</a></li>
-                                <li class="nav-item"><a class="nav-link" href="/Shop/Confirmation">Confirmation</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Shop" asp-action="Index">Shop Category</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Shop" asp-action="Details">Product Details</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Shop" asp-action="Checkout">Product Checkout</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Shop" asp-action="Cart">Shopping Cart</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Shop" asp-action="Confirmation">Confirmation</a></li>
                             </ul>
                         </li>
                         <li class="nav-item submenu dropdown">
                             <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Blog</a>
                             <ul class="dropdown-menu">
-                                <li class="nav-item"><a class="nav-link" href="/Blog">Blog</a></li>
-                                <li class="nav-item"><a class="nav-link" href="/Blog/Details">Blog Details</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Blog" asp-action="Index">Blog</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Blog" asp-action="Details">Blog Details</a></li>
                             </ul>
                         </li>
-                        <li class="nav-item"><a class="nav-link" href="/Contact">Contact</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Contact" asp-action="Index">Contact</a></li>
                         @if (User.Identity.IsAuthenticated)
                         {
-                            <li class="nav-item"><a class="nav-link" href="/Account/Logout">Logout</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Logout">Logout</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Profile">Profile</a></li>
                         }
                         else
                         {
-                            <li class="nav-item"><a class="nav-link" href="/Account/Login">Login</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">Login</a></li>
                         }
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
-                        <li class="nav-item"><a href="#" class="cart"><span class="ti-bag"></span></a></li>
+                        <li class="nav-item"><a asp-controller="Shop" asp-action="Cart" class="cart"><span class="ti-bag"></span></a></li>
                         <li class="nav-item">
                             <button class="search"><span class="lnr lnr-magnifier" id="search"></span></button>
                         </li>
