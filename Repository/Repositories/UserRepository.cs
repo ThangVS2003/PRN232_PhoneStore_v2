@@ -1,4 +1,4 @@
-﻿// Repository/Repository/UserRepository.cs
+﻿
 using BusinessObject.Models;
 using Microsoft.EntityFrameworkCore;
 using Repository.IRepository;
@@ -35,20 +35,13 @@ namespace Repository.Repository
                 .FirstOrDefaultAsync(u => u.Username == username && u.IsDeleted == false);
         }
 
-        public async Task<List<User>> SearchAsync(string username, string email, int? role)
+        public async Task<List<User>> SearchAsync(string username)
         {
             var query = _context.Users.Where(u => u.IsDeleted == false);
             if (!string.IsNullOrEmpty(username))
                 query = query.Where(u => u.Username.Contains(username));
-            if (!string.IsNullOrEmpty(email))
-                query = query.Where(u => u.Email.Contains(email));
-            if (role.HasValue)
-                query = query.Where(u => u.Role == role);
             return await query.ToListAsync();
         }
-
-
-
 
         public async Task AddAsync(User user)
         {
@@ -69,8 +62,6 @@ namespace Repository.Repository
                 existing.Password = user.Password;
                 existing.Role = user.Role;
                 existing.Money = user.Money;
-                //existing.UpdatedAt = DateTime.UtcNow;
-                //existing.UpdatedBy = user.UpdatedBy;
 
                 _context.Users.Update(existing);
                 await _context.SaveChangesAsync();
@@ -84,7 +75,6 @@ namespace Repository.Repository
             {
                 user.IsDeleted = true;
                 user.DeletedAt = DateTime.UtcNow;
-                //user.DeletedBy = "system"; // hoặc truyền vào tùy trường hợp
 
                 _context.Users.Update(user);
                 await _context.SaveChangesAsync();
