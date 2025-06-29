@@ -20,5 +20,6 @@ namespace Service.IService
         Task UpdateAsync(Product product);
         Task<Brand?> GetBrandByNameAsync(string brandName);
         Task DeleteAsync(int id);
+        Task<List<Product>> GetByNameAndBrandIdAsync(string name, int brandId);
     }
 }

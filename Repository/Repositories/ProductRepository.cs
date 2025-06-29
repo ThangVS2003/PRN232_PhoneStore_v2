@@ -19,6 +19,7 @@ namespace Repository.Repository
         {
             var products = await _context.Products
                 .Where(p => p.IsDeleted == false)
+                .Include(p => p.Brand)
                 .ToListAsync();
             Console.WriteLine($"GetAllAsync: Found {products.Count} products");
             return products;
@@ -142,6 +143,22 @@ namespace Repository.Repository
                 product.DeletedBy = "System"; // Hoặc lấy từ context người dùng nếu có
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task<List<Product>> GetByNameAndBrandIdAsync(string name, int brandId)
+        {
+            var query = _context.Products
+                .Where(p => p.IsDeleted == false);
+
+            if (!string.IsNullOrWhiteSpace(name))
+                query = query.Where(p => p.Name.Contains(name));
+
+            if (brandId != 0)
+                query = query.Where(p => p.BrandId == brandId);
+
+            return await query
+                .Include(p => p.Brand)
+                .ToListAsync();
         }
     }
 }

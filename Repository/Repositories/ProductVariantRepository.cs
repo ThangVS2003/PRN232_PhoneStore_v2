@@ -37,6 +37,16 @@ namespace Repository.Repository
                 .FirstOrDefaultAsync(pv => pv.Id == id && pv.IsDeleted != true);
         }
 
+        public async Task<List<ProductVariant>> GetByProductIdAsync(int productId)
+        {
+            return await _context.Set<ProductVariant>()
+                .Where(pv => pv.ProductId == productId && pv.IsDeleted != true)
+                .Include(pv => pv.Color)
+                .Include(pv => pv.Version)
+                .Include(pv => pv.Product)
+                .ToListAsync();
+        }
+
         public async Task AddAsync(ProductVariant productVariant)
         {
             productVariant.CreatedAt = DateTime.Now;

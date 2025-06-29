@@ -28,6 +28,11 @@ namespace Service.Service
             return await _productVariantRepository.GetByIdAsync(id);
         }
 
+        public async Task<List<ProductVariant>> GetByProductIdAsync(int productId)
+        {
+            return await _productVariantRepository.GetByProductIdAsync(productId);
+        }
+
         public async Task AddAsync(ProductVariant productVariant)
         {
             await _productVariantRepository.AddAsync(productVariant);
