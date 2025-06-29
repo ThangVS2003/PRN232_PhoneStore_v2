@@ -1,5 +1,4 @@
-﻿// PhoneStoreAPI/Controllers/UsersController.cs
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using BusinessObject.Models;
 using Service.IService;
@@ -36,14 +35,11 @@ namespace PhoneStoreAPI.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<IActionResult> Search([FromQuery] string username, [FromQuery] string email, [FromQuery] int? role)
+        public async Task<IActionResult> Search([FromQuery] string username)
         {
-            var users = await _userService.SearchAsync(username, email, role);
+            var users = await _userService.SearchAsync(username);
             return Ok(users);
         }
-
-
-
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] UserDto dto)
@@ -64,8 +60,6 @@ namespace PhoneStoreAPI.Controllers
                 Address = dto.Address,
                 Password = dto.Password,
                 Role = dto.Role,
-                //CreatedAt = DateTime.UtcNow,
-                //CreatedBy = "system",
                 Money = 0,
                 IsDeleted = false
             };
@@ -86,7 +80,6 @@ namespace PhoneStoreAPI.Controllers
             if (existingUser == null)
                 return NotFound("User không tồn tại");
 
-            // Kiểm tra trùng Username nhưng không phải chính nó
             var userWithSameUsername = await _userService.GetByUsernameAsync(dto.Username);
             if (userWithSameUsername != null && userWithSameUsername.Id != id)
                 return BadRequest("Username đã tồn tại");
@@ -99,8 +92,6 @@ namespace PhoneStoreAPI.Controllers
             existingUser.Password = dto.Password;
             existingUser.Role = dto.Role;
             existingUser.Money = dto.Money;
-            //existingUser.UpdatedAt = DateTime.UtcNow;
-            //existingUser.UpdatedBy = "system";
 
             await _userService.UpdateAsync(existingUser);
             return Ok("Đã sửa thành công");

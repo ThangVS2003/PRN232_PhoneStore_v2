@@ -1,5 +1,4 @@
-﻿// Service/Service/UserService.cs
-using BusinessObject.Models;
+﻿using BusinessObject.Models;
 using Repository.IRepository;
 using Service.IService;
 using System.Collections.Generic;
@@ -11,7 +10,7 @@ namespace Service.Service
     {
         private readonly IUserRepository _userRepository;
 
-        public UserService(IUserRepository userRepository) // Loại bỏ Singleton để tránh lỗi
+        public UserService(IUserRepository userRepository)
         {
             _userRepository = userRepository;
         }
@@ -31,13 +30,10 @@ namespace Service.Service
             return await _userRepository.GetByUsernameAsync(username);
         }
 
-        public async Task<List<User>> SearchAsync(string username, string email, int? role)
+        public async Task<List<User>> SearchAsync(string username)
         {
-            return await _userRepository.SearchAsync(username, email, role);
+            return await _userRepository.SearchAsync(username);
         }
-
-
-
 
         public async Task AddAsync(User user)
         {
