@@ -39,6 +39,7 @@
                         <th>Original Price</th>
                         <th>Stock</th>
                         <th>Image</th>
+                        <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -62,6 +63,16 @@
                                     else
                                     {
                                         <span>Không có ảnh</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (variant.IsDeleted)
+                                    {
+                                        <span class="label label-danger">Đã xóa</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="label label-success">Hoạt động</span>
                                     }
                                 </td>
                                 <td>

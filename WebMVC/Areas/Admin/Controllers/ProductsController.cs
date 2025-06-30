@@ -20,7 +20,7 @@ namespace WebMVC.Areas.Admin.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var response = await _httpClient.GetAsync("products");
+            var response = await _httpClient.GetAsync("products/allIncluDelete");
             if (!response.IsSuccessStatusCode)
                 return View("Error");
 
@@ -139,7 +139,7 @@ namespace WebMVC.Areas.Admin.Controllers
         public async Task<IActionResult> Details(int id)
         {
             // Lấy thông tin sản phẩm theo id
-            var response = await _httpClient.GetAsync($"products/{id}");
+            var response = await _httpClient.GetAsync($"products/allIncluDelete/{id}");
             if (!response.IsSuccessStatusCode)
                 return NotFound();
 

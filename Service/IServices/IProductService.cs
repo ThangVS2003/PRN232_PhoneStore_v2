@@ -21,5 +21,8 @@ namespace Service.IService
         Task<Brand?> GetBrandByNameAsync(string brandName);
         Task DeleteAsync(int id);
         Task<List<Product>> GetByNameAndBrandIdAsync(string name, int brandId);
+
+        Task<List<Product>> GetAllIncludeDeletedAsync();
+        Task<Product> GetByIdIncludeDeletedAsync(int id);
     }
 }

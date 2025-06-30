@@ -73,5 +73,15 @@ namespace Service.Service
         {
             return await _productRepository.GetByNameAndBrandIdAsync(name, brandId);
         }
+
+        public async Task<List<Product>> GetAllIncludeDeletedAsync()
+        {
+            return await _productRepository.GetAllIncludeDeletedAsync();
+        }
+
+        public async Task<Product> GetByIdIncludeDeletedAsync(int id)
+        {
+            return await _productRepository.GetByIdIncludeDeletedAsync(id);
+        }
     }
 }

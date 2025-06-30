@@ -17,7 +17,7 @@ namespace PhoneStoreAPI.Controllers
             _productService = productService;
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("all/{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var product = await _productService.GetByIdAsync(id);
@@ -65,7 +65,8 @@ namespace PhoneStoreAPI.Controllers
         //    return Ok(products);
         //}
 
-        [HttpGet]
+
+        [HttpGet("all")]
         public async Task<IActionResult> Get()
         {
             var products = await _productService.GetAllAsync();
@@ -242,5 +243,63 @@ namespace PhoneStoreAPI.Controllers
 
             return Ok(result);
         }
+
+        // GET: api/products/allIncluDelete
+        [HttpGet("allIncluDelete")]
+        public async Task<IActionResult> GetAllIncludeDeleted()
+        {
+            var products = await _productService.GetAllIncludeDeletedAsync();
+            var result = products.Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.Description,
+                p.MainImage,
+                BrandName = p.Brand != null ? p.Brand.Name : "Không rõ",
+                p.IsDeleted
+            });
+            return Ok(result);
+        }
+
+        // GET: api/products/allIncluDelete/{id}
+        [HttpGet("allIncluDelete/{id}")]
+        public async Task<IActionResult> GetByIdIncludeDeleted(int id)
+        {
+            var product = await _productService.GetByIdIncludeDeletedAsync(id);
+            if (product == null)
+                return NotFound();
+
+            var result = new
+            {
+                product.Id,
+                product.Name,
+                product.Description,
+                product.MainImage,
+                product.BrandId,
+                product.IsDeleted,
+                Variants = product.ProductVariants
+                    .Select(v => new
+                    {
+                        v.Id,
+                        Color = v.Color?.Name,
+                        Version = v.Version?.Name,
+                        v.SellingPrice,
+                        v.OriginalPrice,
+                        v.StockQuantity,
+                        v.Image
+                    }),
+                Feedbacks = product.FeedbackProducts
+                    .Select(f => new
+                    {
+                        f.Comment,
+                        f.Rating,
+                        f.CreatedAt,
+                        Username = f.User?.Name
+                    })
+            };
+
+            return Ok(result);
+        }
+
     }
 }

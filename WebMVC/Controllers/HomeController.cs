@@ -49,8 +49,8 @@ namespace PhoneStoreMVC.Controllers
                 List<Product> allProducts;
                 try
                 {
-                    Console.WriteLine("Calling API: api/Products");
-                    allProducts = await _httpClient.GetFromJsonAsync<List<Product>>("api/Products");
+                    Console.WriteLine("Calling API: api/Products/all");
+                    allProducts = await _httpClient.GetFromJsonAsync<List<Product>>("api/Products/all");
                     Console.WriteLine($"Total products from api/Products: {allProducts?.Count ?? 0}");
 
                     // Lọc thủ công theo brandId và name
