@@ -11,6 +11,7 @@ namespace Repository.IRepository
     {
         Task<List<Voucher>> GetAllAsync();
         Task<Voucher?> GetByIdAsync(int id);
+        Task<Voucher?> GetByCodeAsync(string code);
         Task<List<Voucher>> SearchAsync(string keyword);
         Task AddAsync(Voucher voucher);
         Task UpdateAsync(Voucher voucher);

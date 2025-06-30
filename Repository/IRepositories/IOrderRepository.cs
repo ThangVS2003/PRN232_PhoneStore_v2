@@ -11,6 +11,7 @@ namespace Repository.IRepository
     {
         Task<List<Order>> GetAllAsync();
         Task<Order?> GetByIdAsync(int id);
+        Task<Order> GetByUserIdAndStatusAsync(int userId, string status);
         Task AddAsync(Order order);
         Task UpdateAsync(Order order);
         Task DeleteAsync(int id);

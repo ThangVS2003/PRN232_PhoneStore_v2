@@ -27,7 +27,10 @@ namespace Service.Service
         {
             return await _voucherRepository.GetByIdAsync(id);
         }
-
+        public async Task<Voucher?> GetVoucherByCodeAsync(string code)
+        {
+            return await _voucherRepository.GetByCodeAsync(code);
+        }
         public async Task<List<Voucher>> SearchAsync(string keyword)
         {
             return await _voucherRepository.SearchAsync(keyword);

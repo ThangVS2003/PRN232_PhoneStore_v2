@@ -42,9 +42,11 @@
                         }
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
-                        <li class="nav-item"><a asp-controller="Shop" asp-action="Cart" class="cart"><span class="ti-bag"></span></a></li>
                         <li class="nav-item">
-                            <button class="search"><span class="lnr lnr-magnifier" id="search"></span></button>
+                            <a href="@Url.Action("Index", "Cart")" class="cart">
+                                <span class="ti-bag"></span>
+                                <span class="cart-count" id="cart-count">0</span>
+                            </a>
                         </li>
                     </ul>
                 </div>
@@ -52,3 +54,60 @@
         </nav>
     </div>
 </header>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        jQuery(document).ready(function () {
+            // Lấy số lượng giỏ hàng khi tải trang
+            function updateCartCount() {
+                jQuery.ajax({
+                    url: '@Url.Action("GetCartCount", "Cart")',
+                    type: 'GET',
+                    success: function (response) {
+                        if (response.success) {
+                            jQuery('#cart-count').text(response.cartCount);
+                        } else {
+                            jQuery('#cart-count').text('0');
+                            if (response.redirectToLogin) {
+                                console.warn('Phiên đăng nhập không hợp lệ khi lấy số lượng giỏ hàng.');
+                            } else {
+                                console.warn('Không thể lấy số lượng giỏ hàng:', response.message);
+                            }
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error('Lỗi khi lấy số lượng giỏ hàng:', xhr.responseText);
+                        jQuery('#cart-count').text('0');
+                    }
+                });
+            }
+
+            // Gọi hàm cập nhật số lượng giỏ hàng khi trang được tải
+            updateCartCount();
+
+            // Cập nhật số lượng giỏ hàng sau khi thêm/xóa sản phẩm
+            jQuery(document).on('cartUpdated', function () {
+                updateCartCount();
+            });
+        });
+    </script>
+    <style>
+        .cart {
+            position: relative;
+            display: inline-block;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: #ffba00;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
+}
