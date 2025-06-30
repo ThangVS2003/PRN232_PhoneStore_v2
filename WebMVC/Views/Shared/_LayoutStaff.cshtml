@@ -1,0 +1,161 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - PhoneStore Staff</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0; /* Loại bỏ padding mặc định */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            overflow-x: hidden;
+        }
+
+        .navbar {
+            background-color: #3498db;
+            padding: 0 20px; /* Giảm padding-top để sát đầu trang */
+            color: #fff;
+            z-index: 900; /* Giảm z-index để sidebar nằm trên */
+        }
+
+            .navbar .navbar-brand {
+                font-size: 24px;
+                font-weight: bold;
+                color: #fff;
+            }
+
+            .navbar .user-info {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .navbar .nav-link {
+                color: #fff;
+                padding: 0;
+                margin-left: 10px;
+            }
+
+                .navbar .nav-link:hover {
+                    color: #ecf0f1;
+                }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 250px;
+            background-color: #2c3e50;
+            color: #fff;
+            padding-top: 20px;
+            z-index: 1000; /* Tăng z-index để sidebar nằm trên navbar */
+        }
+
+            .sidebar .nav-link {
+                color: #ecf0f1;
+                padding: 10px 15px;
+                font-size: 16px;
+                display: flex;
+                align-items: center;
+            }
+
+                .sidebar .nav-link:hover, .sidebar .nav-link.active {
+                    background-color: #34495e;
+                    color: #fff;
+                }
+
+                .sidebar .nav-link i {
+                    margin-right: 10px;
+                    width: 20px;
+                }
+
+        .content {
+            margin-left: 250px;
+            padding: 60px 20px 20px 20px; /* Điều chỉnh padding-top để phù hợp với navbar */
+            min-height: calc(100vh - 60px);
+            background-color: #fff;
+        }
+
+        .footer {
+            background-color: #2c3e50;
+            color: #fff;
+            text-align: center;
+            padding: 10px 0;
+            position: relative;
+            width: 100%;
+            margin-left: 0;
+        }
+        /* Ẩn sidebar trên mobile, dùng class Bootstrap */
+        .sidebar.d-none.d-md-block {
+            /* Không cần thêm CSS, để Bootstrap xử lý */
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">PhoneStore Staff</a>
+            <div class="ms-auto user-info">
+                <span class="navbar-text">Welcome, @User?.Identity?.Name ?? "Staff"</span>
+                <a class="nav-link" href="@Url.Action("Logout", "Account")">Logout <i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="sidebar d-none d-md-block">
+        <h5 class="text-center mb-4">MENU</h5>
+        <nav class="nav flex-column">
+            <a class="nav-link" href="@Url.Action("Index", "Home")">
+                <i class="fas fa-home"></i> Quay lại trang Home
+            </a>
+            <a class="nav-link @((ViewContext.RouteData.Values["Controller"].ToString() == "Staff" && ViewContext.RouteData.Values["Action"].ToString() == "Index") ? "active" : "")" href="@Url.Action("Index", "Staff")">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a class="nav-link @((ViewContext.RouteData.Values["Controller"].ToString() == "Products") ? "active" : "")" href="@Url.Action("Index", "Products")">
+                <i class="fas fa-box"></i> Quản lý sản phẩm
+            </a>
+            <a class="nav-link @((ViewContext.RouteData.Values["Controller"].ToString() == "Vouchers") ? "active" : "")" href="@Url.Action("Index", "Vouchers")">
+                <i class="fas fa-tags"></i> Quản lý voucher
+            </a>
+            <a class="nav-link @((ViewContext.RouteData.Values["Controller"].ToString() == "Feedback") ? "active" : "")" href="@Url.Action("Index", "Feedback")">
+                <i class="fas fa-comments"></i> Quản lý feedback
+            </a>
+            <a class="nav-link @((ViewContext.RouteData.Values["Controller"].ToString() == "ProductVariants") ? "active" : "")" href="@Url.Action("Index", "ProductVariants")">
+                <i class="fas fa-cogs"></i> Quản lý biến thể sản phẩm
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+        @RenderSection("naviheader", required: false)
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <span>Version 1.0.0</span><br />
+            Copyright © 2025 PhoneStore. All rights reserved.
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (IsSectionDefined("Scripts"))
+    {
+        @RenderSection("Scripts", required: false)
+    }
+</body>
+</html>

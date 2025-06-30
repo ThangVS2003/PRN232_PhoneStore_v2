@@ -1,0 +1,140 @@
+﻿@model BusinessObject.Models.User
+
+@{
+    ViewData["Title"] = "Sửa người dùng";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Sửa người dùng</h1>
+            </div>
+            <div class="col-sm-6 text-right">
+                <a href="@Url.Action("Index", "Users", new { area = "Admin" })" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Quay lại
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="card">
+        <div class="card-body">
+            @if (Model == null)
+            {
+                <div class="alert alert-danger">Không tìm thấy thông tin người dùng. Vui lòng kiểm tra ID hoặc API.</div>
+            }
+            else
+            {
+
+                <form id="editUserForm" onsubmit="submitEditUserForm(event)">
+                    <input type="hidden" name="Id" value="@Model.Id" />
+                    <div id="errorMessages" class="text-danger"></div>
+                    <div class="form-group">
+                        <label for="Username">Tên người dùng</label>
+                        <input name="Username" class="form-control" value="@Model.Username" required />
+                        <span class="text-danger" data-valmsg-for="Username"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="Name">Họ tên</label>
+                        <input name="Name" class="form-control" value="@Model.Name" required />
+                        <span class="text-danger" data-valmsg-for="Name"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="Email">Email</label>
+                        <input name="Email" type="email" class="form-control" value="@Model.Email" required />
+                        <span class="text-danger" data-valmsg-for="Email"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="Phone">Điện thoại</label>
+                        <input name="Phone" class="form-control" value="@(Model.Phone ?? "")" />
+                        <span class="text-danger" data-valmsg-for="Phone"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="Address">Địa chỉ</label>
+                        <input name="Address" class="form-control" value="@(Model.Address ?? "")" />
+                        <span class="text-danger" data-valmsg-for="Address"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="Password">Mật khẩu</label>
+                        <input name="Password" type="password" class="form-control" placeholder="Nhập mật khẩu mới nếu muốn thay đổi" />
+                        <span class="text-danger" data-valmsg-for="Password"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="Role">Vai trò</label>
+                        <input name="Role" type="number" class="form-control" value="@(Model.Role?.ToString() ?? "")" />
+                        <span class="text-danger" data-valmsg-for="Role"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="Money">Số dư</label>
+                        <input name="Money" type="number" step="0.01" class="form-control" value="@(Model.Money?.ToString("F2") ?? "0.00")" />
+                        <span class="text-danger" data-valmsg-for="Money"></span>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Cập nhật</button>
+                        <a href="@Url.Action("Index", "Users", new { area = "Admin" })" class="btn btn-secondary">Hủy</a>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        async function submitEditUserForm(event) {
+            event.preventDefault();
+            const form = document.getElementById("editUserForm");
+            const errorMessages = document.getElementById("errorMessages");
+            errorMessages.innerHTML = ""; // Xóa thông báo lỗi cũ
+
+            const formData = new FormData(form);
+            const data = {
+                Id: parseInt(formData.get("Id")),
+                Username: formData.get("Username").trim(),
+                Name: formData.get("Name").trim(),
+                Email: formData.get("Email").trim(),
+                Phone: formData.get("Phone").trim() || null,
+                Address: formData.get("Address").trim() || null,
+                Password: formData.get("Password").trim() || null, // Password tùy chọn
+                Role: parseInt(formData.get("Role")) || null,
+                Money: parseFloat(formData.get("Money")) || 0
+            };
+
+            if (!data.Username || !data.Name || !data.Email) {
+                errorMessages.innerHTML = "Vui lòng điền đầy đủ các trường bắt buộc (Tên người dùng, Họ tên, Email).";
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://localhost:7026/api/Users/${data.Id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    alert("Cập nhật người dùng thành công.");
+                    window.location.href = '@Url.Action("Index", "Users", new { area = "Admin" })';
+                } else {
+                    const error = await response.json();
+                    let errorMessage = "Cập nhật người dùng thất bại: ";
+                    if (error.errors) {
+                        for (const [key, value] of Object.entries(error.errors)) {
+                            errorMessage += `${key}: ${value.join(", ")}<br>`;
+                        }
+                    } else {
+                        errorMessage += error.title || "Lỗi không xác định.";
+                    }
+                    errorMessages.innerHTML = errorMessage;
+                }
+            } catch (error) {
+                errorMessages.innerHTML = "Lỗi server: " + error.message;
+            }
+        }
+    </script>
+}
