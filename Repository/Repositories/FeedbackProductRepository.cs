@@ -64,5 +64,14 @@ namespace Repository.Repository
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<List<FeedbackProduct>> GetByProductIdAsync(int productId)
+        {
+            return await _context.FeedbackProducts
+                                 .Include(fp => fp.Product)
+                                 .Include(fp => fp.User)
+                                 .Where(fp => fp.ProductId == productId)
+                                 .ToListAsync();
+        }
     }
 }

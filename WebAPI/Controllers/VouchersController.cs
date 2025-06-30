@@ -57,7 +57,7 @@ namespace PhoneStoreAPI.Controllers
                 DiscountValue = dto.DiscountValue,
                 DiscountType = dto.DiscountType,
                 MinOrderValue = dto.MinOrderValue,
-                ExpiryDate = DateTime.UtcNow.AddMonths(1), // Set giá trị giả định, có thể thêm vào Dto nếu cần
+                ExpiryDate = dto.ExpiryDate,
                 IsActive = dto.IsActive,
                 ApplyType = dto.ApplyType,
                 Description = dto.Description
@@ -88,6 +88,7 @@ namespace PhoneStoreAPI.Controllers
             existingVoucher.DiscountValue = dto.DiscountValue;
             existingVoucher.DiscountType = dto.DiscountType;
             existingVoucher.MinOrderValue = dto.MinOrderValue;
+            existingVoucher.ExpiryDate = dto.ExpiryDate;
             existingVoucher.IsActive = dto.IsActive;
             existingVoucher.ApplyType = dto.ApplyType;
             existingVoucher.Description = dto.Description;
@@ -106,6 +107,16 @@ namespace PhoneStoreAPI.Controllers
 
             await _voucherService.DeleteAsync(id);
             return Ok("Đã xóa thành công");
+        }
+
+        [HttpPut("{id}/toggle-status")]
+        public async Task<IActionResult> ToggleStatus(int id)
+        {
+            var success = await _voucherService.ToggleActiveStatusAsync(id);
+            if (!success)
+                return NotFound("Voucher not found or update failed");
+
+            return Ok("Voucher status updated successfully");
         }
     }
 }

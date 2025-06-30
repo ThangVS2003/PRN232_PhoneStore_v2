@@ -140,7 +140,18 @@ namespace Repository.Repository
             {
                 product.IsDeleted = true;
                 product.DeletedAt = DateTime.Now;
-                product.DeletedBy = "System"; // Hoặc lấy từ context người dùng nếu có
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task RestoreAsync(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product != null && product.IsDeleted == true)
+            {
+                product.IsDeleted = false;
+                product.DeletedAt = null;
+                product.DeletedBy = null;
                 await _context.SaveChangesAsync();
             }
         }
@@ -148,7 +159,7 @@ namespace Repository.Repository
         public async Task<List<Product>> GetByNameAndBrandIdAsync(string name, int brandId)
         {
             var query = _context.Products
-                .Where(p => p.IsDeleted == false);
+                .Where(p => p.IsDeleted == false || p.IsDeleted == true);
 
             if (!string.IsNullOrWhiteSpace(name))
                 query = query.Where(p => p.Name.Contains(name));
@@ -159,6 +170,30 @@ namespace Repository.Repository
             return await query
                 .Include(p => p.Brand)
                 .ToListAsync();
+        }
+
+        public async Task<List<Product>> GetAllIncludeDeletedAsync()
+        {
+            var products = await _context.Products
+                .Include(p => p.Brand)
+                .ToListAsync();
+            Console.WriteLine($"GetAllIncludeDeletedAsync: Found {products.Count} products (including deleted)");
+            return products;
+        }
+
+        public async Task<Product> GetByIdIncludeDeletedAsync(int id)
+        {
+            var product = await _context.Products
+                .Include(p => p.ProductVariants)
+                    .ThenInclude(pv => pv.Color)
+                .Include(p => p.ProductVariants)
+                    .ThenInclude(pv => pv.Version)
+                .Include(p => p.FeedbackProducts)
+                    .ThenInclude(f => f.User)
+                .FirstOrDefaultAsync(p => p.Id == id); // không lọc IsDeleted
+
+            Console.WriteLine($"GetByIdIncludeDeletedAsync: ProductId {id} {(product != null ? "found" : "not found")} (including deleted)");
+            return product;
         }
     }
 }

@@ -14,6 +14,7 @@ namespace Service.IService
         Task AddAsync(FeedbackProduct feedbackProduct);
         Task UpdateAsync(FeedbackProduct feedbackProduct);
         Task DeleteAsync(int id);
+        Task<List<FeedbackProduct>> GetByProductIdAsync(int productId);
     }
 }
 

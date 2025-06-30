@@ -69,9 +69,24 @@ namespace Service.Service
             await _productRepository.DeleteAsync(id);
         }
 
+        public async Task RestoreAsync(int id)
+        {
+            await _productRepository.RestoreAsync(id); // Gọi repository
+        }
+
         public async Task<List<Product>> GetByNameAndBrandIdAsync(string name, int brandId)
         {
             return await _productRepository.GetByNameAndBrandIdAsync(name, brandId);
+        }
+
+        public async Task<List<Product>> GetAllIncludeDeletedAsync()
+        {
+            return await _productRepository.GetAllIncludeDeletedAsync();
+        }
+
+        public async Task<Product> GetByIdIncludeDeletedAsync(int id)
+        {
+            return await _productRepository.GetByIdIncludeDeletedAsync(id);
         }
     }
 }

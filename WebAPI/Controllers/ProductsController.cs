@@ -17,7 +17,7 @@ namespace PhoneStoreAPI.Controllers
             _productService = productService;
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("all/{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var product = await _productService.GetByIdAsync(id);
@@ -65,7 +65,8 @@ namespace PhoneStoreAPI.Controllers
         //    return Ok(products);
         //}
 
-        [HttpGet]
+
+        [HttpGet("all")]
         public async Task<IActionResult> Get()
         {
             var products = await _productService.GetAllAsync();
@@ -223,6 +224,21 @@ namespace PhoneStoreAPI.Controllers
             return Ok("Đã xóa thành công");
         }
 
+        // PUT: api/Product/restore/5
+        [HttpPut("restore/{id}")]
+        public async Task<IActionResult> Restore(int id)
+        {
+            var existing = await _productService.GetByIdIncludeDeletedAsync(id);
+            if (existing == null)
+                return NotFound("Không tìm thấy sản phẩm.");
+
+            if (existing.IsDeleted == false)
+                return BadRequest("Sản phẩm chưa bị xóa.");
+
+            await _productService.RestoreAsync(id);
+            return Ok("Khôi phục sản phẩm thành công.");
+        }
+
         [HttpGet("by-name-and-brand")]
         public async Task<IActionResult> GetByNameAndBrandId([FromQuery] string? name, [FromQuery] int brandId)
         {
@@ -242,5 +258,64 @@ namespace PhoneStoreAPI.Controllers
 
             return Ok(result);
         }
+
+        // GET: api/products/allIncluDelete
+        [HttpGet("allIncluDelete")]
+        public async Task<IActionResult> GetAllIncludeDeleted()
+        {
+            var products = await _productService.GetAllIncludeDeletedAsync();
+            var result = products.Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.Description,
+                p.MainImage,
+                BrandName = p.Brand != null ? p.Brand.Name : "Không rõ",
+                p.IsDeleted
+            });
+            return Ok(result);
+        }
+
+        // GET: api/products/allIncluDelete/{id}
+        [HttpGet("allIncluDelete/{id}")]
+        public async Task<IActionResult> GetByIdIncludeDeleted(int id)
+        {
+            var product = await _productService.GetByIdIncludeDeletedAsync(id);
+            if (product == null)
+                return NotFound();
+
+            var result = new
+            {
+                product.Id,
+                product.Name,
+                product.Description,
+                product.MainImage,
+                product.BrandId,
+                product.IsDeleted,
+                Variants = product.ProductVariants
+                    .Select(v => new
+                    {
+                        v.Id,
+                        Color = v.Color?.Name,
+                        Version = v.Version?.Name,
+                        v.SellingPrice,
+                        v.OriginalPrice,
+                        v.StockQuantity,
+                        v.Image,
+                        v.IsDeleted
+                    }),
+                Feedbacks = product.FeedbackProducts
+                    .Select(f => new
+                    {
+                        f.Comment,
+                        f.Rating,
+                        f.CreatedAt,
+                        Username = f.User?.Name
+                    })
+            };
+
+            return Ok(result);
+        }
+
     }
 }
