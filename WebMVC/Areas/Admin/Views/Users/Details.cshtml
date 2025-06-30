@@ -1,0 +1,58 @@
+﻿@model BusinessObject.Models.User
+
+@{
+    ViewData["Title"] = "Chi tiết người dùng";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Chi tiết người dùng</h1>
+            </div>
+            <div class="col-sm-6 text-right">
+                <a href="@Url.Action("Index", "Users", new { area = "Admin" })" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Quay lại
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="card">
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-2">ID</dt>
+                <dd class="col-sm-10">@Model.Id</dd>
+                <dt class="col-sm-2">Tên người dùng</dt>
+                <dd class="col-sm-10">@Model.Username</dd>
+                <dt class="col-sm-2">Họ tên</dt>
+                <dd class="col-sm-10">@Model.Name</dd>
+                <dt class="col-sm-2">Email</dt>
+                <dd class="col-sm-10">@Model.Email</dd>
+                <dt class="col-sm-2">Điện thoại</dt>
+                <dd class="col-sm-10">@(Model.Phone ?? "Không có")</dd>
+                <dt class="col-sm-2">Địa chỉ</dt>
+                <dd class="col-sm-10">@(Model.Address ?? "Không có")</dd>
+                <dt class="col-sm-2">Vai trò</dt>
+                <dd class="col-sm-10">@Model.Role</dd>
+                <dt class="col-sm-2">Số dư</dt>
+                <dd class="col-sm-10">@(Model.Money?.ToString("N0") ?? "0") VNĐ</dd>
+                <dt class="col-sm-2">Ngày tạo</dt>
+                <dd class="col-sm-10">@(Model.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Không có")</dd>
+                <dt class="col-sm-2">Ngày cập nhật</dt>
+                <dd class="col-sm-10">@(Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Không có")</dd>
+                <dt class="col-sm-2">Trạng thái</dt>
+                <dd class="col-sm-10">@(Model.IsDeleted == true ? "Đã xóa" : "Hoạt động")</dd>
+            </dl>
+            <div>
+                <a href="@Url.Action("Edit", "Users", new { area = "Admin", id = Model.Id })" class="btn btn-warning">Sửa</a>
+                <a href="@Url.Action("Delete", "Users", new { area = "Admin", id = Model.Id })" class="btn btn-danger">Xóa</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts { }
