@@ -12,6 +12,9 @@ using Repository.IRepositories;
 using Repository.Repositories;
 using Service.IServices;
 using Service.Services;
+using Microsoft.AspNetCore.OData;
+using Microsoft.OData.Edm;
+using Microsoft.OData.ModelBuilder;
 
 namespace PhoneStoreAPI
 {
@@ -32,7 +35,9 @@ namespace PhoneStoreAPI
      {
          options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
          options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
-     });
+     }).AddOData(opt => opt
+        .AddRouteComponents("odata", GetEdmModel())
+        .Select().Filter().OrderBy().Expand().SetMaxTop(100).Count());
 
             // Add Authentication
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -131,7 +136,7 @@ namespace PhoneStoreAPI
 
             //thangne
             builder.Services.AddScoped<IDashboardService, DashboardService>();
-            
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline
@@ -149,6 +154,14 @@ namespace PhoneStoreAPI
             app.MapControllers();
 
             app.Run();
+        }
+
+        static IEdmModel GetEdmModel()
+        {
+            var odataBuilder = new ODataConventionModelBuilder();
+            odataBuilder.EntitySet<Product>("Products");
+            // nếu cần, thêm các EntitySet khác: Brands, Orders, ...
+            return odataBuilder.GetEdmModel();
         }
     }
 }

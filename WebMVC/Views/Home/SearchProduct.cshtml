@@ -1,7 +1,7 @@
 ﻿@model dynamic
 
 @{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Search Result";
 }
 
 <!-- Start Banner Area -->
@@ -115,7 +115,7 @@
                                         <div class="product-details">
                                             <h6>@product.Name</h6>
                                             <div class="price">
-                                                
+                                                <h6>$@sellingPrice</h6>
                                                 @if (variant != null && variant.OriginalPrice > variant.SellingPrice)
                                                 {
                                                     <h6 class="l-through">$@variant.OriginalPrice</h6>
@@ -155,30 +155,6 @@
             </section>
             <!-- End Best Seller -->
             <!-- Start Pagination -->
-            <div class="filter-bar d-flex flex-wrap align-items-center justify-content-center">
-                <div class="pagination">
-                    @{
-                        var currentPage = ViewBag.CurrentPage ?? 1;
-                        var totalPages = ViewBag.TotalPages ?? 1;
-                        var brandId = ViewBag.SelectedBrandId;
-                        var minPrice = ViewBag.MinPrice;
-                        var maxPrice = ViewBag.MaxPrice;
-
-                        <a href="@Url.Action("Index", "Home", new { brandId = brandId, minPrice = minPrice, maxPrice = maxPrice, page = currentPage - 1 })" class="prev-arrow @(currentPage <= 1 ? "disabled" : "")">
-                            <i class="fa fa-long-arrow-left" aria-hidden="true"></i>
-                        </a>
-
-                        @for (int i = 1; i <= totalPages; i++)
-                        {
-                            <a href="@Url.Action("Index", "Home", new { brandId = brandId, minPrice = minPrice, maxPrice = maxPrice, page = i })" class="@(currentPage == i ? "active" : "")">@i</a>
-                        }
-
-                        <a href="@Url.Action("Index", "Home", new { brandId = brandId, minPrice = minPrice, maxPrice = maxPrice, page = currentPage + 1 })" class="next-arrow @(currentPage >= totalPages ? "disabled" : "")">
-                            <i class="fa fa-long-arrow-right" aria-hidden="true"></i>
-                        </a>
-                    }
-                </div>
-            </div>
             <!-- End Pagination -->
         </div>
     </div>
