@@ -1,5 +1,4 @@
-﻿// Service/Service/AuthService.cs
-using BusinessObject.Models;
+﻿using BusinessObject.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Repository.IRepository;
@@ -26,7 +25,7 @@ namespace Service.Service
         public async Task<string> AuthenticateAsync(string username, string password)
         {
             var user = await _userRepository.GetByUsernameAsync(username);
-            if (user == null || user.Password != password)
+            if (user == null || user.Password != password) // Lưu ý: Nên mã hóa mật khẩu trong thực tế
                 return null;
 
             string roleName = user.Role switch
@@ -40,7 +39,8 @@ namespace Service.Service
             var claims = new[]
             {
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, roleName)
+                new Claim(ClaimTypes.Role, roleName),
+                new Claim("sub", user.Id.ToString()) // Thêm claim sub chứa UserId
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));

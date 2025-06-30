@@ -1,0 +1,331 @@
+﻿@model WebMVC.Controllers.CartViewModel
+
+@{
+    ViewData["Title"] = "Giỏ hàng";
+}
+
+<!-- Start Banner Area -->
+<section class="banner-area organic-breadcrumb">
+    <div class="container">
+        <div class="breadcrumb-banner d-flex flex-wrap align-items-center justify-content-end">
+            <div class="col-first">
+                <h1>Giỏ hàng</h1>
+                <nav class="d-flex align-items-center">
+                    <a href="@Url.Action("Index", "Home")">Trang chủ<span class="lnr lnr-arrow-right"></span></a>
+                    <a href="#">Giỏ hàng</a>
+                </nav>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End Banner Area -->
+<!-- Start Cart Area -->
+<section class="cart-area mt-50">
+    <div class="container">
+        @if (Model != null && Model.OrderDetails != null && Model.OrderDetails.Any())
+        {
+            <div class="row">
+                <div class="col-12">
+                    <h4>Giỏ hàng của bạn</h4>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Hình ảnh</th>
+                                <th>Sản phẩm</th>
+                                <th>Số lượng</th>
+                                <th>Giá</th>
+                                <th>Tổng</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.OrderDetails)
+                            {
+                                <tr>
+                                    <td><img src="@(item.ProductVariant?.Image ?? "~/Content/img/product/p1.jpg")" alt="@(item.ProductVariant?.Name ?? "Sản phẩm")" style="width: 100px;" /></td>
+                                    <td>
+                                        @(item.ProductVariant?.Name ?? "Sản phẩm không xác định")<br />
+                                        <small>Màu: @(item.ProductVariant?.Color ?? "N/A"), Phiên bản: @(item.ProductVariant?.Version ?? "N/A")</small>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="quantity-input" min="1" value="@item.Quantity" data-order-detail-id="@item.Id" style="width: 80px;" />
+                                    </td>
+                                    <td>@(item.ProductVariant?.SellingPrice.ToString("#,##0") ?? "0") ₫</td>
+                                    <td>@(((item.ProductVariant?.SellingPrice ?? 0) * item.Quantity).ToString("#,##0")) ₫</td>
+                                    <td>
+                                        <button class="btn btn-danger remove-item" data-order-detail-id="@item.Id">Xóa</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-lg-6">
+                    <h5>Áp dụng Voucher</h5>
+                    <div class="input-group mb-3">
+                        <input type="text" id="voucher-code" class="form-control" placeholder="Nhập mã voucher" value="@(Model.VoucherCode ?? "")" />
+                        <button class="btn primary-btn" id="apply-voucher">Áp dụng</button>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.VoucherCode) && Model.VoucherCode != "N/A")
+                    {
+                        <p class="text-success">Voucher <strong>@Model.VoucherCode</strong> đã được áp dụng!</p>
+                    }
+                </div>
+                <div class="col-lg-6">
+                    <h5>Thông tin giao hàng</h5>
+                    <p><strong>Địa chỉ:</strong> @(Model.ShippingAddress ?? "Chưa có địa chỉ")</p>
+                    <p><small>Để thay đổi địa chỉ, vui lòng cập nhật trong <a href="@Url.Action("Profile", "Account")">hồ sơ cá nhân</a>.</small></p>
+                    <h5>Tổng tiền: <span id="cart-total">@Model.Total.ToString("#,##0") ₫</span></h5>
+                    <a href="@Url.Action("Checkout", "Order")" class="btn primary-btn">Thanh toán</a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                <div class="col-12">
+                    <p>Giỏ hàng của bạn đang trống.</p>
+                    <a href="@Url.Action("Index", "Product")" class="btn primary-btn">Tiếp tục mua sắm</a>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+<!-- End Cart Area -->
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        jQuery(document).ready(function () {
+            // Hàm định dạng tiền tệ VND
+            function formatVND(amount) {
+                return amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+            }
+
+            // Update cart item quantity
+            jQuery('.quantity-input').on('change', function () {
+                var orderDetailId = jQuery(this).data('order-detail-id');
+                var quantity = parseInt(jQuery(this).val());
+                if (quantity < 1) {
+                    jQuery(this).val(1);
+                    quantity = 1;
+                }
+
+                jQuery.ajax({
+                    url: '@Url.Action("UpdateCartItem", "Cart", new { area = "" })/' + orderDetailId,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ quantity: quantity }),
+                    success: function (response) {
+                        if (response.success) {
+                            jQuery('#cart-count').text(response.cartCount);
+                            jQuery('#cart-total').text(formatVND(response.total));
+                            jQuery(document).trigger('cartUpdated');
+                            location.reload();
+                        } else {
+                            if (response.redirectToLogin) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Lỗi!',
+                                    text: response.message || 'Vui lòng đăng nhập để cập nhật giỏ hàng.',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.href = '@Url.Action("Login", "Account")';
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Lỗi!',
+                                    text: response.message || 'Không thể cập nhật số lượng.',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            }
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error('Update cart error:', xhr.responseText);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi!',
+                            text: xhr.responseJSON?.message || 'Đã xảy ra lỗi khi cập nhật giỏ hàng.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                });
+            });
+
+            // Remove cart item
+            jQuery('.remove-item').click(function () {
+                var orderDetailId = jQuery(this).data('order-detail-id');
+                jQuery.ajax({
+                    url: '@Url.Action("RemoveCartItem", "Cart", new { area = "" })/' + orderDetailId,
+                    type: 'DELETE',
+                    success: function (response) {
+                        if (response.success) {
+                            jQuery('#cart-count').text(response.cartCount);
+                            jQuery('#cart-total').text(formatVND(response.total));
+                           
+                            jQuery(document).trigger('cartUpdated');
+                            location.reload();
+                        } else {
+                            if (response.redirectToLogin) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Lỗi!',
+                                    text: response.message || 'Vui lòng đăng nhập để xóa sản phẩm.',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.href = '@Url.Action("Login", "Account")';
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Lỗi!',
+                                    text: response.message || 'Không thể xóa sản phẩm.',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            }
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error('Remove cart error:', xhr.responseText);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi!',
+                            text: xhr.responseJSON?.message || 'Đã xảy ra lỗi khi xóa sản phẩm.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                });
+            });
+
+            // Apply voucher
+            jQuery('#apply-voucher').click(function () {
+                var voucherCode = jQuery('#voucher-code').val();
+                if (!voucherCode) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi!',
+                        text: 'Vui lòng nhập mã voucher.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    return;
+                }
+
+                jQuery.ajax({
+                    url: '@Url.Action("ApplyVoucher", "Cart")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ voucherCode: voucherCode }),
+                    success: function (response) {
+                        if (response.success) {
+                            jQuery('#cart-total').text(formatVND(response.total));
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Thành công!',
+                                text: 'Áp dụng voucher thành công.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                            jQuery(document).trigger('cartUpdated');
+                            location.reload();
+                        } else {
+                            if (response.redirectToLogin) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Lỗi!',
+                                    text: response.message || 'Vui lòng đăng nhập để áp dụng voucher.',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.href = '@Url.Action("Login", "Account")';
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Lỗi!',
+                                    text: response.message || 'Không thể áp dụng voucher.',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            }
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error('Apply voucher error:', xhr.responseText);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi!',
+                            text: xhr.responseJSON?.message || 'Đã xảy ra lỗi khi áp dụng voucher.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+    <style>
+        .cart-area {
+            padding: 50px 0;
+        }
+
+        .table {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+            .table th, .table td {
+                padding: 15px;
+                text-align: center;
+                vertical-align: middle;
+            }
+
+        .quantity-input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .primary-btn {
+            background-color: #ffba00;
+            color: #fff;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+
+            .primary-btn:hover {
+                background-color: #e6a800;
+            }
+
+        .btn-danger {
+            padding: 8px 16px;
+            font-size: 1em;
+        }
+
+        .input-group .form-control {
+            border-radius: 6px 0 0 6px;
+        }
+
+        .input-group .btn {
+            border-radius: 0 6px 6px 0;
+        }
+
+        #cart-total {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+    </style>
+}

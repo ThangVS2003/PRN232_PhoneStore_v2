@@ -83,6 +83,7 @@ namespace PhoneStoreAPI
                         new string[] { }
                     }
                 });
+                c.CustomSchemaIds(type => type.FullName);
             });
 
             // Add CORS
@@ -136,7 +137,7 @@ namespace PhoneStoreAPI
 
             //thangne
             builder.Services.AddScoped<IDashboardService, DashboardService>();
-
+            builder.Services.AddScoped<ICartService, CartService>();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline

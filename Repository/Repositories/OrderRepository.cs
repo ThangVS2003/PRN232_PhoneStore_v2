@@ -24,20 +24,64 @@ namespace Repository.Repository
                 .Include(o => o.User)
                 .Include(o => o.Voucher)
                 .Include(o => o.OrderDetails)
-                .Include(o => o.FeedbackOrders)
+                .ThenInclude(od => od.ProductVariant)
+                .ThenInclude(pv => pv.Product)
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.ProductVariant)
+                .ThenInclude(pv => pv.Color)
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.ProductVariant)
+                .ThenInclude(pv => pv.Version)
                 .ToListAsync();
         }
 
         public async Task<Order?> GetByIdAsync(int id)
         {
             return await _context.Orders
+               .Include(o => o.User)
+               .Include(o => o.Voucher)
+               .Include(o => o.OrderDetails)
+               .ThenInclude(od => od.ProductVariant)
+               .ThenInclude(pv => pv.Product)
+               .Include(o => o.OrderDetails)
+               .ThenInclude(od => od.ProductVariant)
+               .ThenInclude(pv => pv.Color)
+               .Include(o => o.OrderDetails)
+               .ThenInclude(od => od.ProductVariant)
+               .ThenInclude(pv => pv.Version)
+               .FirstOrDefaultAsync(o => o.Id == id);
+        }
+        public async Task<Order> GetByUserIdAndStatusAsync(int userId, string status)
+        {
+            var order = await _context.Orders
                 .Include(o => o.User)
                 .Include(o => o.Voucher)
                 .Include(o => o.OrderDetails)
-                .Include(o => o.FeedbackOrders)
-                .FirstOrDefaultAsync(o => o.Id == id);
-        }
+                .ThenInclude(od => od.ProductVariant)
+                .ThenInclude(pv => pv.Product)
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.ProductVariant)
+                .ThenInclude(pv => pv.Color)
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.ProductVariant)
+                .ThenInclude(pv => pv.Version)
+                .FirstOrDefaultAsync(o => o.UserId == userId && o.Status == status);
 
+            if (order == null)
+            {
+                order = new Order
+                {
+                    UserId = userId,
+                    Status = status,
+                    OrderDate = DateTime.UtcNow,
+                    TotalAmount = 0,
+                    OrderDetails = new List<OrderDetail>()
+                };
+                await AddAsync(order);
+            }
+
+            return order;
+        }
         public async Task AddAsync(Order order)
         {
             await _context.Orders.AddAsync(order);
