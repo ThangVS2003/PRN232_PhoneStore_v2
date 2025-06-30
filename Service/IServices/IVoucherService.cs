@@ -12,6 +12,7 @@ namespace Service.IService
         Task<List<Voucher>> GetAllAsync();
         Task<Voucher> GetByIdAsync(int id);
         Task<List<Voucher>> SearchAsync(string keyword);
+        Task<Voucher?> GetVoucherByCodeAsync(string code);
         Task AddAsync(Voucher voucher);
         Task UpdateAsync(Voucher voucher);
         Task DeleteAsync(int id);

@@ -20,6 +20,7 @@ namespace WebMVC
                 options.IdleTimeout = TimeSpan.FromMinutes(30); // Thời gian hết hạn session
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             });
             // Cấu hình HttpClient với handler bỏ qua chứng chỉ
             builder.Services.AddHttpClient("PhoneStoreAPI", client =>
@@ -29,18 +30,31 @@ namespace WebMVC
             {
                 ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true // Bỏ qua lỗi chứng chỉ
             });
+            // Cấu hình xác thực Cookie
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        options.LoginPath = "/Account/Login";
-        options.LogoutPath = "/Account/Logout";
-        options.AccessDeniedPath = "/Account/AccessDenied";
-    });
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/Account/Login";
+                    options.LogoutPath = "/Account/Logout";
+                    options.AccessDeniedPath = "/Account/AccessDenied";
+                    options.Cookie.HttpOnly = true;
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                    options.Cookie.SameSite = SameSiteMode.Strict;
+                    options.ExpireTimeSpan = TimeSpan.FromHours(1);
+                });
+
+            // Thêm logging
+            builder.Services.AddLogging(logging =>
+            {
+                logging.AddConsole();
+                logging.AddDebug();
+            });
+
             // Enable authorization
             builder.Services.AddAuthorization();
 
             var app = builder.Build();
-
+           
             // Configure the HTTP request pipeline
             if (!app.Environment.IsDevelopment())
             {

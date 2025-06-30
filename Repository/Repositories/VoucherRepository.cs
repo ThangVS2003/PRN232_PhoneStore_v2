@@ -33,7 +33,13 @@ namespace Repository.Repository
                 .Include(v => v.Orders)
                 .FirstOrDefaultAsync(v => v.Id == id);
         }
-
+        public async Task<Voucher?> GetByCodeAsync(string code)
+        {
+            return await _context.Vouchers
+                .Include(v => v.Products)
+                .Include(v => v.Orders)
+                .FirstOrDefaultAsync(v => v.Code == code);
+        }
         public async Task<List<Voucher>> SearchAsync(string keyword)
         {
             var query = _context.Vouchers

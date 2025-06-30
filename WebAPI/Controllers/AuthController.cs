@@ -1,5 +1,4 @@
-﻿// PhoneStoreAPI/Controllers/AuthController.cs
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.IService;
 using System.Threading.Tasks;
@@ -32,7 +31,7 @@ namespace PhoneStoreAPI.Controllers
                 return Unauthorized("Thông tin đăng nhập không đúng");
 
             var user = await _userService.GetByUsernameAsync(model.Username);
-            return Ok(new { Token = token, Role = user.Role });
+            return Ok(new { Token = token, Role = user.Role, UserId = user.Id });
         }
 
         [HttpPost("register")]
