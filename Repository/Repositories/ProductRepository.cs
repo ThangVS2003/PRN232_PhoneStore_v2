@@ -140,7 +140,18 @@ namespace Repository.Repository
             {
                 product.IsDeleted = true;
                 product.DeletedAt = DateTime.Now;
-                product.DeletedBy = "System"; // Hoặc lấy từ context người dùng nếu có
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task RestoreAsync(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product != null && product.IsDeleted == true)
+            {
+                product.IsDeleted = false;
+                product.DeletedAt = null;
+                product.DeletedBy = null;
                 await _context.SaveChangesAsync();
             }
         }

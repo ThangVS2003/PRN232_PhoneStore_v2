@@ -126,5 +126,12 @@ namespace PhoneStoreAPI.Controllers
             await _productVariantService.DeleteAsync(id);
             return Ok("Đã xóa thành công");
         }
+
+        [HttpPut("restore/{id}")]
+        public async Task<IActionResult> Restore(int id)
+        {
+            await _productVariantService.RestoreAsync(id);
+            return Ok("Khôi phục biến thể thành công");
+        }
     }
 }

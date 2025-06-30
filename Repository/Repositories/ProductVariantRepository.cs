@@ -72,5 +72,18 @@ namespace Repository.Repository
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task RestoreAsync(int id)
+        {
+            var productVariant = await _context.Set<ProductVariant>().FindAsync(id);
+            if (productVariant != null && productVariant.IsDeleted == true)
+            {
+                productVariant.IsDeleted = false;
+                productVariant.DeletedAt = null;
+                productVariant.DeletedBy = null;
+                _context.Set<ProductVariant>().Update(productVariant);
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }

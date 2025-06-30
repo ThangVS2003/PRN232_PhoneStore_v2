@@ -224,6 +224,21 @@ namespace PhoneStoreAPI.Controllers
             return Ok("Đã xóa thành công");
         }
 
+        // PUT: api/Product/restore/5
+        [HttpPut("restore/{id}")]
+        public async Task<IActionResult> Restore(int id)
+        {
+            var existing = await _productService.GetByIdIncludeDeletedAsync(id);
+            if (existing == null)
+                return NotFound("Không tìm thấy sản phẩm.");
+
+            if (existing.IsDeleted == false)
+                return BadRequest("Sản phẩm chưa bị xóa.");
+
+            await _productService.RestoreAsync(id);
+            return Ok("Khôi phục sản phẩm thành công.");
+        }
+
         [HttpGet("by-name-and-brand")]
         public async Task<IActionResult> GetByNameAndBrandId([FromQuery] string? name, [FromQuery] int brandId)
         {
@@ -286,7 +301,8 @@ namespace PhoneStoreAPI.Controllers
                         v.SellingPrice,
                         v.OriginalPrice,
                         v.StockQuantity,
-                        v.Image
+                        v.Image,
+                        v.IsDeleted
                     }),
                 Feedbacks = product.FeedbackProducts
                     .Select(f => new

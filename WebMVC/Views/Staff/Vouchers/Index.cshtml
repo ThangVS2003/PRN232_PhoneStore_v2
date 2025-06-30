@@ -1,0 +1,292 @@
+﻿@model List<WebMVC.Models.VoucherViewModel> 
+
+@{
+    ViewData["Title"] = "Voucher List";
+    Layout = "~/Views/Shared/_LayoutStaff.cshtml";
+}
+
+<!-- Nút Add Voucher -->
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2 align-items-center">
+            <div class="col-sm-6">
+                <h1>Danh sách Voucher</h1>
+            </div>
+            <div class="col-sm-6 text-right">
+                <button class="btn btn-success" style="background-color: #28a745; color: white;" data-toggle="modal" data-target="#addVoucherModal">
+                    <i class="fas fa-plus"></i> Add Voucher
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="box">
+        <div class="box-header with-border">
+            <form method="get" action="/Vouchers/Search" class="form-inline mb-3">
+                <div class="form-group mr-2">
+                    <input type="text" name="code" value="@ViewBag.SelectedCode" placeholder="Voucher Code..." class="form-control" />
+                </div>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+        <div class="box-body table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Code</th>
+                        <th>Discount Value</th>
+                        <th>Discount Type</th>
+                        <th>Min Order Value</th>
+                        <th>Expiry Date</th>
+                        <th>Is Active</th>
+                        <th>Apply Type</th>
+                        <th>Description</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Code</td>
+                                <td>@item.DiscountValue</td>
+                                <td>@item.DiscountType</td>
+                                <td>@(item.MinOrderValue.HasValue ? item.MinOrderValue.Value.ToString("N0") : "-")</td>
+                                <td>@item.ExpiryDate.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    @if (item.IsActive == true)
+                                    {
+                                        <span class="label label-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="label label-danger">Inactive</span>
+                                    }
+                                </td>
+                                <td>@item.ApplyType</td>
+                                <td>@item.Description</td>
+                                <td>
+                                    <div style="display: flex; justify-content: center; gap: 6px;">
+                                        @* <a href="#" class="btn btn-info btn-sm">Disable</a> *@
+                                        <a href="javascript:void(0);"
+                                           class="btn btn-warning btn-sm"
+                                           data-id="@item.Id"
+                                           data-code="@item.Code"
+                                           data-discountvalue="@item.DiscountValue"
+                                           data-discounttype="@item.DiscountType"
+                                           data-minordervalue="@item.MinOrderValue"
+                                           data-expirydate="@item.ExpiryDate.ToString("yyyy-MM-dd")"
+                                           data-isactive="@item.IsActive.ToString().ToLower()"
+                                           data-applytype="@item.ApplyType"
+                                           data-description="@item.Description"
+                                           onclick="openEditVoucherModal(this)">
+                                            Edit
+                                        </a>
+
+                                        <button class="btn btn-danger btn-sm">Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="10" class="text-center text-danger font-weight-bold">No vouchers available.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- Modal Thêm / Sửa Voucher -->
+<div class="modal fade" id="addVoucherModal" tabindex="-1" role="dialog" aria-labelledby="addVoucherModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <!-- HEADER -->
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <h5 class="modal-title font-weight-bold mb-0">Add New Voucher</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="resetAddVoucherForm()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!-- FORM -->
+            <form id="addVoucherForm" onsubmit="submitAddVoucherForm(event)">
+                <div class="modal-body">
+
+                    <!-- Trường ẩn ID (dùng cho Edit) -->
+                    <input type="hidden" name="Id" />
+
+                    <div class="form-group">
+                        <label>Code</label>
+                        <input type="text" name="Code" class="form-control" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Discount Value</label>
+                        <input type="number" name="DiscountValue" class="form-control" min="0.01" step="0.01" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Discount Type</label>
+                        <select name="DiscountType" class="form-control" required>
+                            <option value="" selected disabled>Select Discount Type</option>
+                            <option value="Percent">Percent</option>
+                            <option value="Amount">Amount</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Min Order Value</label>
+                        <input type="number" name="MinOrderValue" class="form-control" min="0.01" step="0.01" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Expiry Date</label>
+                        <input type="date" name="ExpiryDate" class="form-control" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Is Active</label>
+                        <select name="IsActive" class="form-control" required>
+                            <option value="" selected disabled>Select Status</option>
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Apply Type</label>
+                        <select name="ApplyType" class="form-control" required>
+                            <option value="" selected disabled>Select Apply Type</option>
+                            <option value="Order">Order</option>
+                            <option value="Product">Product</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" name="Description" class="form-control" />
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="resetAddVoucherForm()">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Voucher</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    async function submitAddVoucherForm(event) {
+        event.preventDefault();
+
+        const form = document.getElementById("addVoucherForm");
+        const formData = new FormData(form);
+        const voucherId = formData.get("Id");
+
+        const data = {
+            Id: parseInt(voucherId) || 0,
+            Code: formData.get("Code").trim(),
+            DiscountValue: parseFloat(formData.get("DiscountValue")),
+            DiscountType: formData.get("DiscountType"),
+            MinOrderValue: parseFloat(formData.get("MinOrderValue")),
+            ExpiryDate: formData.get("ExpiryDate"),
+            IsActive: formData.get("IsActive") === "true",
+            ApplyType: formData.get("ApplyType"),
+            Description: formData.get("Description").trim()
+        };
+
+        // Validate
+        if (
+            !data.Code ||
+            data.DiscountValue <= 0 ||
+            !data.DiscountType ||
+            data.MinOrderValue <= 0 ||
+            !data.ExpiryDate ||
+            data.IsActive === null ||
+            !data.ApplyType
+        ) {
+            alert("Please fill in all required fields correctly.");
+            return;
+        }
+
+        try {
+            const url = data.Id > 0 ? `/Vouchers/Update/${data.Id}` : "/Vouchers/Create";
+            const method = data.Id > 0 ? "PUT" : "POST";
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                $('#addVoucherModal').modal('hide');
+                resetAddVoucherForm();
+                alert(data.Id > 0 ? "Voucher updated successfully." : "Voucher added successfully.");
+                location.reload();
+            } else {
+                const err = await response.text();
+                if (err.includes("trùng mã")) {
+                    alert("Voucher code already exists. Please choose a different code.");
+                } else {
+                    alert("Failed: " + err);
+                }
+            }
+        } catch (error) {
+            alert("Error: " + error);
+        }
+    }
+
+    function resetAddVoucherForm() {
+        const form = document.getElementById("addVoucherForm");
+        if (form) {
+            form.reset();
+            form.querySelector('input[name="Id"]').value = "";
+        }
+    }
+
+    function openEditVoucherModal(button) {
+        const modal = $('#addVoucherModal');
+        modal.find('.modal-title').text("Edit Voucher");
+
+        const form = document.getElementById("addVoucherForm");
+
+        form.querySelector('input[name="Id"]').value = button.dataset.id;
+        form.querySelector('input[name="Code"]').value = button.dataset.code;
+        form.querySelector('input[name="DiscountValue"]').value = button.dataset.discountvalue;
+        form.querySelector('select[name="DiscountType"]').value = button.dataset.discounttype;
+        form.querySelector('input[name="MinOrderValue"]').value = button.dataset.minordervalue;
+        form.querySelector('input[name="ExpiryDate"]').value = button.dataset.expirydate;
+        form.querySelector('select[name="IsActive"]').value = button.dataset.isactive;
+        form.querySelector('select[name="ApplyType"]').value = button.dataset.applytype;
+        form.querySelector('input[name="Description"]').value = button.dataset.description || '';
+
+        modal.modal('show');
+    }
+
+    $('#addVoucherModal').on('hidden.bs.modal', function () {
+        resetAddVoucherForm();
+        $(this).find('.modal-title').text("Add New Voucher");
+    });
+</script>
+
+
+

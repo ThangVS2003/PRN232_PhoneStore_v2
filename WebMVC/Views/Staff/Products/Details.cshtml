@@ -1,0 +1,415 @@
+﻿@model WebMVC.Models.ProductDetailViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết sản phẩm";
+    Layout = "~/Views/Shared/_LayoutStaff.cshtml";
+    var colors = ViewBag.Colors as List<SelectListItem> ?? new List<SelectListItem>();
+    var versions = ViewBag.Versions as List<SelectListItem> ?? new List<SelectListItem>();
+}
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="@Url.Action("Index", "Products")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
+                    <h1 class="ml-3">@Model.Name</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">List of variations</h3>
+            <div class="text-right">
+                <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#addVariantModal">Add Variant</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Color</th>
+                        <th>Version</th>
+                        <th>Selling Price</th>
+                        <th>Original Price</th>
+                        <th>Stock</th>
+                        <th>Image</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Variants != null && Model.Variants.Any())
+                    {
+                        foreach (var variant in Model.Variants)
+                        {
+                            <tr>
+                                <td>@variant.Id</td>
+                                <td>@variant.Color</td>
+                                <td>@variant.Version</td>
+                                <td>@variant.SellingPrice.ToString("N0")</td>
+                                <td>@variant.OriginalPrice.ToString("N0")</td>
+                                <td>@variant.StockQuantity</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(variant.Image))
+                                    {
+                                        <img src="@variant.Image" alt="Variant Image" width="60" height="60" />
+                                    }
+                                    else
+                                    {
+                                        <span>Không có ảnh</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (variant.IsDeleted)
+                                    {
+                                        <span class="label label-danger">remove</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="label label-success">active</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div style="display: flex; justify-content: center; gap: 6px;">
+                                        <button class="btn btn-info btn-sm" style="background-color: #4285F4; color: white;">Serial</button>
+                                        <button class="btn btn-warning btn-sm"
+                                                onclick="openEditVariantModal(this)"
+                                                data-id="@variant.Id"
+                                                data-color="@variant.Color"
+                                                data-version="@variant.Version"
+                                                data-selling="@variant.SellingPrice"
+                                                data-original="@variant.OriginalPrice"
+                                                data-stock="@variant.StockQuantity"
+                                                data-image="@variant.Image">
+                                            Edit
+                                        </button>
+                                        @if (variant.IsDeleted)
+                                        {
+                                            <button class="btn btn-success btn-sm" onclick="restoreVariant(@variant.Id)">
+                                                Restore
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-danger btn-sm" onclick="deleteVariant(@variant.Id)">
+                                                Delete
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-danger">Không có biến thể nào.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<hr />
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h3 class="card-title">Feedback</h3>
+        <!--<div class="text-right">
+            <button class="btn btn-success btn-sm">Add FeedBack</button>
+        </div> -->
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Comment</th>
+                    <th>Rating</th>
+                    <th>Created At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Feedbacks != null && Model.Feedbacks.Any())
+                {
+                    foreach (var fb in Model.Feedbacks)
+                    {
+                        <tr>
+                            <td>@fb.Id</td>
+                            <td>@fb.UserName</td>
+                            <td>@fb.Comment</td>
+                            <td>
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= fb.Rating)
+                                    {
+                                        <i class="fas fa-star" style="color: orange;"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="far fa-star" style="color: orange;"></i>
+                                    }
+                                }
+                            </td>
+                            <td>@(fb.CreatedAt?.ToString("MMM dd, yyyy HH:mm") ?? "N/A")</td>
+                            <td>
+                                <div style="display: flex; justify-content: center; gap: 6px;">
+                                    <!--<button class="btn btn-warning btn-sm">Edit</button>-->
+                                    <button class="btn btn-danger btn-sm">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-danger">No feedbacks available.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<br>
+<br>
+<br>
+
+
+<div class="modal fade" id="addVariantModal" tabindex="-1" role="dialog" aria-labelledby="addVariantModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <!-- HEADER -->
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <h5 class="modal-title font-weight-bold mb-0" style="font-size: 20px;">Add New Variant</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="resetAddVariantForm()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!-- FORM -->
+            <form id="addVariantForm" onsubmit="submitAddVariantForm(event)">
+                <div class="modal-body">
+                    <input type="hidden" name="ProductId" value="@Model.Id" />
+
+                    <div class="form-group">
+                        <label>Color</label>
+                        <select name="Color" class="form-control custom-scroll-select" required>
+                            <option value="" selected disabled>Select Color</option>
+                            @foreach (var color in colors)
+                            {
+                                <option value="@color.Text">@color.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Version</label>
+                        <select name="Version" class="form-control custom-scroll-select" required>
+                            <option value="" selected disabled>Select Version</option>
+                            @foreach (var version in versions)
+                            {
+                                <option value="@version.Text">@version.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Selling Price</label>
+                        <input type="number" name="SellingPrice" class="form-control" required min="1" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Original Price</label>
+                        <input type="number" name="OriginalPrice" class="form-control" required min="1" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Stock</label>
+                        <input type="number" name="StockQuantity" class="form-control" required min="1" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Image URL</label>
+                        <input type="text" name="Image" class="form-control" />
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="resetAddVariantForm()">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Variant</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+<script>
+        async function submitAddVariantForm(event) {
+        event.preventDefault();
+
+        const form = document.getElementById("addVariantForm");
+        const formData = new FormData(form);
+
+        const isEditing = form.getAttribute("data-editing") === "true";
+        const variantId = form.getAttribute("data-id");
+
+        const data = {
+            ProductId: parseInt(formData.get("ProductId")),
+            Color: formData.get("Color"),
+            Version: formData.get("Version"),
+            SellingPrice: parseFloat(formData.get("SellingPrice")),
+            OriginalPrice: parseFloat(formData.get("OriginalPrice")),
+            StockQuantity: parseInt(formData.get("StockQuantity")),
+            Image: formData.get("Image")?.trim() || ""
+        };
+
+        if (!data.Color || !data.Version || data.SellingPrice <= 0 || data.OriginalPrice <= 0 || data.StockQuantity <= 0) {
+            alert("Please enter valid values for all required fields.");
+            return;
+        }
+
+        try {
+            const url = isEditing
+                ? `/ProductVariants/UpdateVariant/${variantId}`
+                : `/ProductVariants/CreateVariant`;
+
+            const response = await fetch(url, {
+                method: isEditing ? "PUT" : "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                $('#addVariantModal').modal('hide');
+                resetAddVariantForm();
+                alert(isEditing ? "Variant updated successfully." : "Variant added successfully.");
+                location.reload();
+            } else {
+                const err = await response.text();
+                alert((isEditing ? "Failed to update" : "Failed to add") + " variant: " + err);
+            }
+        } catch (err) {
+            alert("Error: " + err.message);
+        }
+    }
+
+        function resetAddVariantForm() {
+        const form = document.getElementById("addVariantForm");
+        if (form) {
+            form.reset();
+            form.removeAttribute("data-editing");
+            form.removeAttribute("data-id");
+            document.querySelector("#addVariantModal .modal-title").textContent = "Add New Variant";
+        }
+    }
+
+    $('#addVariantModal').on('hidden.bs.modal', function () {
+        resetAddVariantForm();
+    });
+</script>
+
+<script>
+    function openEditVariantModal(button) {
+        const modal = document.getElementById("addVariantModal");
+
+        // Đổi tiêu đề
+        const modalTitle = modal.querySelector(".modal-title");
+        modalTitle.textContent = "Edit Variant";
+
+        // Set form data
+        const form = modal.querySelector("form");
+        form.setAttribute("data-editing", "true");
+        form.setAttribute("data-id", button.getAttribute("data-id"));
+
+        form.querySelector('[name="Color"]').value = button.getAttribute("data-color");
+        form.querySelector('[name="Version"]').value = button.getAttribute("data-version");
+        form.querySelector('[name="SellingPrice"]').value = button.getAttribute("data-selling");
+        form.querySelector('[name="OriginalPrice"]').value = button.getAttribute("data-original");
+        form.querySelector('[name="StockQuantity"]').value = button.getAttribute("data-stock");
+        form.querySelector('[name="Image"]').value = button.getAttribute("data-image");
+
+        // Mở modal
+        $('#addVariantModal').modal('show');
+    }
+</script>
+
+<script>
+    async function deleteVariant(id) {
+        if (!confirm("Bạn có chắc chắn muốn xóa biến thể này?")) return;
+
+        try {
+            const response = await fetch(`/ProductVariants/Delete/${id}`, {
+                method: "DELETE"
+            });
+
+            if (response.ok) {
+                alert("Xóa biến thể thành công.");
+                location.reload();
+            } else {
+                const error = await response.text();
+                alert("Xóa biến thể thất bại: " + error);
+            }
+        } catch (err) {
+            alert("Đã xảy ra lỗi: " + err);
+        }
+    }
+
+    async function restoreVariant(id) {
+        if (!confirm("Bạn có chắc chắn muốn khôi phục biến thể này?")) return;
+
+        try {
+            const response = await fetch(`/ProductVariants/Restore/${id}`, {
+                method: "PUT"
+            });
+
+            if (response.ok) {
+                alert("Khôi phục biến thể thành công.");
+                location.reload();
+            } else {
+                const error = await response.text();
+                alert("Khôi phục biến thể thất bại: " + error);
+            }
+        } catch (err) {
+            alert("Đã xảy ra lỗi: " + err);
+        }
+    }
+</script>
+
+
+
+<style>
+    .custom-scroll-select {
+        max-height: 150px; /* ~4 items chiều cao */
+        overflow-y: auto;
+    }
+
+    /* Đảm bảo dropdown mở ra có scroll - Áp dụng cho Chrome, Firefox */
+    select.custom-scroll-select option {
+        padding: 8px;
+    }
+
+    /* Với Bootstrap, cần điều chỉnh dropdown UI */
+    select.custom-scroll-select {
+        display: block;
+    }
+</style>

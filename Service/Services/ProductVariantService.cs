@@ -47,5 +47,10 @@ namespace Service.Service
         {
             await _productVariantRepository.DeleteAsync(id);
         }
+
+        public async Task RestoreAsync(int id)
+        {
+            await _productVariantRepository.RestoreAsync(id);
+        }
     }
 }

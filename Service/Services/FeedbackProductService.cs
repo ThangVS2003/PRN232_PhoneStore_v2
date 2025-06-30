@@ -42,5 +42,10 @@ namespace Service.Service
         {
             await _feedbackProductRepository.DeleteAsync(id);
         }
+
+        public async Task<List<FeedbackProduct>> GetByProductIdAsync(int productId)
+        {
+            return await _feedbackProductRepository.GetByProductIdAsync(productId);
+        }
     }
 }
