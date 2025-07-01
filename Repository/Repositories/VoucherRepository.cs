@@ -47,8 +47,9 @@ namespace Repository.Repository
                 .Include(v => v.Orders)
                 .AsQueryable();
 
-            if (!string.IsNullOrEmpty(keyword))
+            if (!string.IsNullOrWhiteSpace(keyword))
             {
+                keyword = keyword.Trim(); // <-- loại bỏ khoảng trắng đầu/cuối
                 query = query.Where(v => v.Code.Contains(keyword));
             }
 
@@ -90,5 +91,17 @@ namespace Repository.Repository
                 await _context.SaveChangesAsync();
             }
         }
+
+        //public async Task<bool> ToggleActiveStatusAsync(int id)
+        //{
+        //    var voucher = await _context.Vouchers.FirstOrDefaultAsync(v => v.Id == id);
+        //    if (voucher == null) return false;
+
+        //    voucher.IsActive = !(voucher.IsActive ?? false); // Đảo ngược trạng thái
+        //    await _context.SaveChangesAsync();
+
+        //    return true;
+        //}
+
     }
 }

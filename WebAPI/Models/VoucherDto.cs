@@ -7,6 +7,7 @@
         public decimal DiscountValue { get; set; }
         public string? DiscountType { get; set; }
         public decimal? MinOrderValue { get; set; }
+        public DateTime ExpiryDate { get; set; }
         public bool? IsActive { get; set; }
         public string? ApplyType { get; set; }
         public string? Description { get; set; }

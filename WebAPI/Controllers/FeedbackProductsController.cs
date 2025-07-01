@@ -101,5 +101,25 @@ namespace PhoneStoreAPI.Controllers
             await _feedbackProductService.DeleteAsync(id);
             return Ok("Đã xóa thành công");
         }
+
+        [HttpGet("product/{productId}")]
+        public async Task<IActionResult> GetByProductId(int productId)
+        {
+            var feedbacks = await _feedbackProductService.GetByProductIdAsync(productId);
+            if (feedbacks == null || !feedbacks.Any())
+                return NotFound("No feedback found for the given product.");
+
+            var dtos = feedbacks.Select(f => new FeedbackProductDto
+            {
+                Id = f.Id,
+                UserName = f.User.Name,
+                ProductId = f.ProductId,
+                Rating = f.Rating,
+                Comment = f.Comment,
+                CreatedAt = f.CreatedAt
+            }).ToList();
+
+            return Ok(dtos);
+        }
     }
 }

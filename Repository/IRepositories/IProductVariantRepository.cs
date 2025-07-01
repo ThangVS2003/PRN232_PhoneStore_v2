@@ -15,5 +15,6 @@ namespace Repository.IRepository
         Task AddAsync(ProductVariant productVariant);
         Task UpdateAsync(ProductVariant productVariant);
         Task DeleteAsync(int id);
+        Task RestoreAsync(int id);
     }
 }

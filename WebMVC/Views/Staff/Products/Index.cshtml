@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "Bảng Sản phẩm";
-    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+    Layout = "~/Views/Shared/_LayoutStaff.cshtml";
     var selectedName = ViewBag.SelectedName as string ?? "";
     var selectedBrandId = (int?)ViewBag.SelectedBrandId ?? 0;
 }
@@ -25,19 +25,20 @@
 <section class="content">
     <div class="box">
         <div class="box-header with-border">
-            <form method="get" action="/Admin/Products/Search" class="form-inline mb-3">
+            <form method="get" action="/Products/Search" class="form-inline mb-3">
                 <div class="form-group mr-2">
-                    <input type="text" name="name" value="@selectedName" placeholder="Tên sản phẩm..." class="form-control" />
+                    <input type="text" name="name" value="@selectedName" placeholder="Product Name..." class="form-control" />
                 </div>
                 <div class="form-group mr-2">
                     <select name="brandId" class="form-control">
                         @foreach (var item in ViewBag.Brands as List<SelectListItem>)
-                        {
-                            <option value="@item.Value" @(item.Value == selectedBrandId.ToString() ? "selected" : "")>@item.Text</option>
-                        }
+                            {
+                                var isSelected = item.Value == selectedBrandId.ToString() ? "selected" : "";
+                                @:<option value="@item.Value" @isSelected>@item.Text</option>
+                            }
                     </select>
                 </div>
-                <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+                <button type="submit" class="btn btn-primary">Search</button>
             </form>
         </div>
         <div class="box-body table-responsive">
@@ -45,12 +46,12 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Tên</th>
-                        <th>Mô tả</th>
-                        <th>Hình ảnh chính</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Main image</th>
                         <th>Brand</th>
                         <th>Status</th>
-                        <th>Hành động</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -76,33 +77,39 @@
                                 <td>
                                     @if (item.IsDeleted)
                                     {
-                                        <span class="label label-danger">Đã xóa</span>
+                                        <span class="label label-danger">remove</span>
                                     }
                                     else
                                     {
-                                        <span class="label label-success">Hoạt động</span>
+                                        <span class="label label-success">active</span>
                                     }
                                 </td>
                                 <td>
                                     <div style="display: flex; justify-content: center; gap: 6px;">
-                                        <a href="@Url.Action("Details", "Products", new { area = "Admin", id = item.Id })" class="btn btn-info btn-sm" style="background-color: #4285F4; color: white;">Details</a>
+                                        <a href="@Url.Action("Details", "Products", new { id = item.Id })" class="btn btn-info btn-sm" style="background-color: #4285F4; color: white;">Details</a>
                                         <a href="javascript:void(0);"
                                            class="btn btn-warning btn-sm"
-                                           data-toggle="modal"
-                                           data-target="#editProductModal"
                                            data-id="@item.Id"
                                            data-name="@item.Name"
                                            data-description="@item.Description"
                                            data-brandname="@item.BrandName"
                                            data-mainimage="@item.MainImage"
                                            onclick="prepareEditModal(this)">
-                                            Edit
+                                           Edit
                                         </a>
 
-                                        <button class="btn btn-danger btn-sm"
-                                                onclick="deleteProduct(@item.Id)">
-                                            Delete
-                                        </button>
+                                        @if (item.IsDeleted)
+                                        {
+                                            <button class="btn btn-success btn-sm" onclick="restoreProduct(@item.Id)">
+                                                    Restore
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-danger btn-sm" onclick="deleteProduct(@item.Id)">
+                                                    Delete
+                                            </button>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -111,7 +118,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="7" class="text-center text-danger font-weight-bold">Không có sản phẩm phù hợp.</td>
+                            <td colspan="7" class="text-center text-danger font-weight-bold">No suitable product.</td>
                         </tr>
                     }
                 </tbody>
@@ -201,7 +208,7 @@
         }
 
         try {
-            const response = await fetch("/Admin/Products/Create", {
+            const response = await fetch("/Products/Create", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -339,7 +346,7 @@
         }
 
         try {
-            const response = await fetch(`/Admin/Products/Update/${data.Id}`, {
+            const response = await fetch(`/Products/Update/${data.Id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
@@ -363,12 +370,13 @@
 </script>
 
 
+<!-- Logic Xóa Sản Phẩm -->
 <script>
         async function deleteProduct(id) {
         if (!confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) return;
 
         try {
-            const response = await fetch(`/Admin/Products/Delete/${id}`, {
+            const response = await fetch(`/Products/Delete/${id}`, {
                 method: "DELETE"
             });
 
@@ -385,3 +393,26 @@
     }
 </script>
 
+
+<!-- Logic Khôi phục Sản Phẩm -->
+<script>
+    async function restoreProduct(id) {
+        if (!confirm("Bạn có chắc chắn muốn khôi phục sản phẩm này?")) return;
+
+        try {
+            const response = await fetch(`/Products/Restore/${id}`, {
+                method: "PUT"
+            });
+
+            if (response.ok) {
+                alert("Khôi phục sản phẩm thành công.");
+                location.reload();
+            } else {
+                const error = await response.text();
+                alert("Khôi phục sản phẩm thất bại: " + error);
+            }
+        } catch (err) {
+            alert("Đã xảy ra lỗi: " + err);
+        }
+    }
+</script>

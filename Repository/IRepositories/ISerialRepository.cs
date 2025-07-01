@@ -12,8 +12,10 @@ namespace Repository.IRepository
         Task<List<Serial>> GetAllAsync();
         Task<Serial?> GetByIdAsync(int id);
         Task<List<Serial>> SearchAsync(string keyword);
+        Task<List<Serial>> SearchByProductVariantIdAsync(string keyword, int? productVariantId);
         Task AddAsync(Serial serial);
         Task UpdateAsync(Serial serial);
         Task DeleteAsync(int id);
+        Task<List<Serial>> GetByProductVariantIdAsync(int productVariantId);
     }
 }

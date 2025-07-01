@@ -50,5 +50,10 @@ namespace Service.Service
         {
             await _voucherRepository.DeleteAsync(id);
         }
+
+        //public async Task<bool> ToggleActiveStatusAsync(int id)
+        //{
+        //    return await _voucherRepository.ToggleActiveStatusAsync(id);
+        //}
     }
 }

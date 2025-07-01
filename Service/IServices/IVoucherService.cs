@@ -16,5 +16,6 @@ namespace Service.IService
         Task AddAsync(Voucher voucher);
         Task UpdateAsync(Voucher voucher);
         Task DeleteAsync(int id);
+        //Task<bool> ToggleActiveStatusAsync(int id);
     }
 }

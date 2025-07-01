@@ -1,0 +1,213 @@
+﻿@model List<WebMVC.Models.SerialViewModel>
+
+@{
+    ViewData["Title"] = "Serial List";
+    Layout = "~/Views/Shared/_LayoutStaff.cshtml";
+}
+
+<!-- Tiêu đề -->
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2 align-items-center">
+            <div class="col-sm-6">
+                <h1>Danh sách Serial</h1>
+            </div>
+            <div class="col-sm-6 text-right">
+                <a class="btn btn-secondary" href="/Products/Details/@ViewBag.ProductId">
+                    <i class="fas fa-arrow-left"></i> Quay lại sản phẩm
+                </a>
+            </div>
+            <div class="text-right">
+                <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#serialModal">
+                    <i class="fas fa-plus"></i> Add Serial
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Bảng Serial -->
+<section class="content">
+    <div class="box">
+        <div class="box-header with-border">
+            <form method="get" action="/Serials/Search" class="form-inline mb-3">
+                <input type="hidden" name="variantId" value="@ViewBag.VariantId" />
+                <input type="hidden" name="productId" value="@ViewBag.ProductId" />
+                <div class="form-group mr-2">
+                    <input type="text" name="serialNumber" value="@ViewBag.SelectedSerialNumber" placeholder="Serial Number..." class="form-control" />
+                </div>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+        <div class="box-body table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Serial Number</th>
+                        <th>Status</th>
+                        <th>
+                            <div style="display: flex; justify-content: center; gap: 6px;">Actions</div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var serial in Model)
+                        {
+                            <tr>
+                                <td>@serial.Id</td>
+                                <td>@serial.SerialNumber</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(serial.Status))
+                                    {
+                                        <span class="badge badge-info">@serial.Status</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">N/A</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div style="display: flex; justify-content: center; gap: 6px;">
+                                        <button class="btn btn-warning btn-sm"
+                                                onclick="openEditSerialModal(this)"
+                                                data-id="@serial.Id"
+                                                data-serialnumber="@serial.SerialNumber"
+                                                data-status="@serial.Status">
+                                            Edit
+                                        </button>
+
+                                        <button class="btn btn-danger btn-sm">Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-danger font-weight-bold">Không có serial nào.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<div class="modal fade" id="serialModal" tabindex="-1" role="dialog" aria-labelledby="serialModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <!-- HEADER -->
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <h5 class="modal-title font-weight-bold mb-0" id="serialModalLabel">Add Serial</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="resetSerialForm()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!-- FORM -->
+            <form id="serialForm" onsubmit="submitSerialForm(event)">
+                <div class="modal-body">
+                    <input type="hidden" name="Id" />
+                    <input type="hidden" name="ProductVariantId" value="@ViewBag.VariantId" />
+
+                    <div class="form-group">
+                        <label>Serial Number</label>
+                        <input type="text" name="SerialNumber" class="form-control" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select name="Status" class="form-control" required>
+                            <option value="" disabled selected>-- Select Status --</option>
+                            <option>In Stock</option>
+                            <option>Sold</option>
+                            <option>Defective</option>
+                            <option>Returned</option>
+                            <option>Discontinued</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="resetSerialForm()">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Serial</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function resetSerialForm() {
+        const form = document.getElementById("serialForm");
+        form.reset();
+        form.querySelector('input[name="Id"]').value = "";
+        document.getElementById("serialModalLabel").innerText = "Add Serial";
+    }
+
+    function openEditSerialModal(button) {
+        const form = document.getElementById("serialForm");
+
+        form.querySelector('input[name="Id"]').value = button.dataset.id;
+        form.querySelector('input[name="SerialNumber"]').value = button.dataset.serialnumber;
+        form.querySelector('select[name="Status"]').value = button.dataset.status;
+
+        document.getElementById("serialModalLabel").innerText = "Edit Serial";
+
+        $('#serialModal').modal('show');
+    }
+
+    async function submitSerialForm(event) {
+        event.preventDefault();
+
+        const form = document.getElementById("serialForm");
+        const formData = new FormData(form);
+
+        const data = {
+            Id: parseInt(formData.get("Id") || 0),
+            ProductVariantId: parseInt(formData.get("ProductVariantId")),
+            SerialNumber: formData.get("SerialNumber").trim(),
+            Status: formData.get("Status").trim()
+        };
+
+        if (!data.SerialNumber || !data.Status) {
+            alert("Please fill in all fields.");
+            return;
+        }
+
+        const url = data.Id > 0 ? `/Serials/Update/${data.Id}` : "/Serials/Create";
+        const method = data.Id > 0 ? "PUT" : "POST";
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                $('#serialModal').modal('hide');
+                alert(data.Id > 0 ? "Serial updated successfully." : "Serial added successfully.");
+                location.reload();
+            } else {
+                const err = await response.text();
+                alert("Error: " + err);
+            }
+        } catch (error) {
+            alert("Error: " + error);
+        }
+    }
+
+    $('#serialModal').on('hidden.bs.modal', function () {
+        resetSerialForm();
+    });
+</script>
