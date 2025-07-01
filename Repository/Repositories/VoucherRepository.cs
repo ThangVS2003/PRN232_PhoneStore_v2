@@ -92,16 +92,16 @@ namespace Repository.Repository
             }
         }
 
-        public async Task<bool> ToggleActiveStatusAsync(int id)
-        {
-            var voucher = await _context.Vouchers.FirstOrDefaultAsync(v => v.Id == id);
-            if (voucher == null) return false;
+        //public async Task<bool> ToggleActiveStatusAsync(int id)
+        //{
+        //    var voucher = await _context.Vouchers.FirstOrDefaultAsync(v => v.Id == id);
+        //    if (voucher == null) return false;
 
-            voucher.IsActive = !(voucher.IsActive ?? false); // Đảo ngược trạng thái
-            await _context.SaveChangesAsync();
+        //    voucher.IsActive = !(voucher.IsActive ?? false); // Đảo ngược trạng thái
+        //    await _context.SaveChangesAsync();
 
-            return true;
-        }
+        //    return true;
+        //}
 
     }
 }

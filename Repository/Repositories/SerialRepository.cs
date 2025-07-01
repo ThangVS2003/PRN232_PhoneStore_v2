@@ -38,9 +38,30 @@ namespace Repository.Repository
                 .Include(s => s.ProductVariant)
                 .AsQueryable();
 
-            if (!string.IsNullOrEmpty(keyword))
+            if (!string.IsNullOrWhiteSpace(keyword))
             {
+                keyword = keyword.Trim();
                 query = query.Where(s => s.SerialNumber.Contains(keyword));
+            }
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<List<Serial>> SearchByProductVariantIdAsync(string keyword, int? productVariantId)
+        {
+            var query = _context.Serials
+                .Include(s => s.ProductVariant)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                keyword = keyword.Trim();
+                query = query.Where(s => s.SerialNumber.Contains(keyword));
+            }
+
+            if (productVariantId.HasValue)
+            {
+                query = query.Where(s => s.ProductVariantId == productVariantId.Value);
             }
 
             return await query.ToListAsync();
@@ -75,6 +96,13 @@ namespace Repository.Repository
                 await _context.SaveChangesAsync();
             }
         }
-    }
 
+        public async Task<List<Serial>> GetByProductVariantIdAsync(int productVariantId)
+        {
+            return await _context.Serials
+                .Include(s => s.ProductVariant)
+                .Where(s => s.ProductVariantId == productVariantId)
+                .ToListAsync();
+        }
+    }
 }

@@ -89,7 +89,9 @@
                                             Edit
                                         </a>
 
-                                        <button class="btn btn-danger btn-sm">Delete</button>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteVoucher(@item.Id)">
+                                            Delete
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -288,5 +290,26 @@
     });
 </script>
 
+<script>
+    async function deleteVoucher(id) {
+        if (!confirm("Bạn có chắc chắn muốn xóa voucher này?")) return;
+
+        try {
+            const response = await fetch(`/Vouchers/Delete/${id}`, {
+                method: "DELETE"
+            });
+
+            if (response.ok) {
+                alert("Xóa voucher thành công.");
+                location.reload();
+            } else {
+                const error = await response.text();
+                alert("Xóa voucher thất bại: " + error);
+            }
+        } catch (err) {
+            alert("Đã xảy ra lỗi: " + err);
+        }
+    }
+</script>
 
 
