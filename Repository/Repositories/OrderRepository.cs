@@ -34,6 +34,18 @@ namespace Repository.Repository
                 .ThenInclude(pv => pv.Version)
                 .ToListAsync();
         }
+        public async Task<List<Order>> GetOrdersByUserIdAsync(int userId)
+        {
+            return await _context.Orders
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.ProductVariant)              
+                        .ThenInclude(pv => pv.Product)               
+                .Where(o => o.UserId == userId)
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
+        }
+
+
 
         public async Task<Order?> GetByIdAsync(int id)
         {

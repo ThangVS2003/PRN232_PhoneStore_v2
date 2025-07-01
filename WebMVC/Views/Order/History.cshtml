@@ -1,0 +1,120 @@
+﻿@model List<PhoneStoreMVC.ViewModels.OrderDetailViewModel>
+
+@{
+    ViewData["Title"] = "Order History";
+
+    var statusLabels = new Dictionary<string, string>
+    {
+        { "processing", "Processing" },
+        { "shipping", "Shipping" },
+        { "delivered", "Delivered" },
+        { "cancelled", "Cancelled" }
+    };
+
+    var statusBadgeClass = new Dictionary<string, string>
+    {
+        { "processing", "primary text-dark"},
+        { "shipping", "warning text-dark" },
+        { "delivered", "success" },
+        { "cancelled", "danger" }
+    };
+}
+
+<div class="container py-5">
+    <h2 class="mb-4">My Orders</h2>
+
+    <div class="btn-group w-100 mb-4" role="group" aria-label="Order status filters">
+        <button type="button" class="btn btn-outline-secondary active" data-status="all">All</button>
+        @foreach (var status in statusLabels.Keys)
+        {
+            <button type="button" class="btn btn-outline-@statusBadgeClass[status]" data-status="@status">
+                @statusLabels[status]
+            </button>
+        }
+    </div>
+
+    <div class="row g-4" id="orderList">
+        @if (Model != null && Model.Count > 0)
+        {
+            foreach (var order in Model)
+            {
+                var statusKey = (order.Status ?? "processing").ToLower();
+                var badgeClass = statusBadgeClass.ContainsKey(statusKey) ? statusBadgeClass[statusKey] : "secondary";
+
+                <div class="col-12 col-md-6 col-lg-4 order-item" data-status="@statusKey">
+                    <div class="card h-100 order-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="card-subtitle text-muted">Order #@order.OrderId</h6>
+                                <span class="badge bg-@badgeClass">@statusLabels[statusKey]</span>
+                            </div>
+                            <p class="card-text"><strong>Date:</strong> @order.OrderDate?.ToString("MMM dd, yyyy")</p>
+                            <p class="card-text"><strong>Total:</strong> @String.Format("{0:N0} ₫", order.TotalAmount)</p>
+                            <p class="card-text"><strong>Address:</strong> @order.ShippingAddress</p>
+                            <a asp-action="Detail" asp-controller="Order" asp-route-id="@order.OrderId" class="btn btn-sm btn-outline-primary mt-2">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <div id="noOrders" class="text-center py-5 d-none">
+        <h4>No orders found for selected status</h4>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const buttons = document.querySelectorAll('.btn-group .btn');
+        const orders = document.querySelectorAll('.order-item');
+
+        buttons.forEach(button => {
+            button.addEventListener('click', function () {
+                const status = this.dataset.status;
+
+                buttons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+
+                let hasVisible = false;
+                orders.forEach(order => {
+                    if (status === "all" || order.dataset.status === status) {
+                        order.style.display = "";
+                        hasVisible = true;
+                    } else {
+                        order.style.display = "none";
+                    }
+                });
+
+                document.getElementById('noOrders').classList.toggle('d-none', hasVisible);
+            });
+        });
+
+        // 👉 Click mặc định khi load
+        document.querySelector('[data-status="all"]').click();
+    </script>
+
+    <style>
+        .card {
+            transition: transform 0.2s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        .badge {
+            font-size: 0.875rem;
+            padding: 0.5em 0.75em;
+        }
+
+            .badge.bg-warning,
+            .badge.bg-success {
+                color: #FFFF !important;
+            }
+
+        .btn-group .btn {
+            flex: 1;
+            padding: 0.75rem;
+            font-size: 0.9rem;
+        }
+    </style>
+}

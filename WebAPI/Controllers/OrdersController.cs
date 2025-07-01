@@ -86,5 +86,51 @@ namespace PhoneStoreAPI.Controllers
             await _orderService.DeleteAsync(id);
             return Ok("Đã xóa thành công");
         }
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetOrdersByUserId(int userId)
+        {
+            var orders = await _orderService.GetOrdersByUserIdAsync(userId);
+            if (orders == null || !orders.Any())
+                return NotFound("Không có đơn hàng nào");
+            var result = orders.Select(o => new
+            {
+                o.Id,
+                o.OrderDate,
+                o.Status,
+                o.TotalAmount,
+                o.ShippingAddress
+            });
+
+            return Ok(result);
+        }
+
+        [HttpGet("details/{orderId}")]
+        public async Task<IActionResult> GetOrderDetailsById(int orderId)
+        {
+            var order = await _orderService.GetByIdAsync(orderId);
+            if (order == null)
+                return NotFound("Đơn hàng không tồn tại");
+
+            var result = new
+            {
+                order.Id,
+                order.OrderDate,
+                order.Status,
+                order.TotalAmount,
+                order.ShippingAddress,
+                Products = order.OrderDetails.Select(od => new
+                {
+                    ProductName = od.ProductVariant.Product.Name,
+                    Version = od.ProductVariant.Version?.Name,
+                    Color = od.ProductVariant.Color?.Name,
+                    od.Quantity,
+                    od.UnitPrice,
+                    Image = od.ProductVariant.Image
+                })
+            };
+
+            return Ok(result);
+        }
+
     }
 }
