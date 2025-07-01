@@ -33,7 +33,10 @@ namespace PhoneStoreMVC.Controllers
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid)
+            {
+                _logger.LogWarning("ModelState không hợp lệ khi đăng nhập với username: {Username}", model.Username);
                 return View(model);
+            }
 
             try
             {
@@ -43,40 +46,44 @@ namespace PhoneStoreMVC.Controllers
                     var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
                     if (result == null || string.IsNullOrEmpty(result.Token) || result.UserId == 0)
                     {
-                        _logger.LogWarning("API login trả về dữ liệu không hợp lệ cho username: {Username}.", model.Username);
+                        _logger.LogWarning("API login trả về dữ liệu không hợp lệ cho username: {Username}", model.Username);
                         ModelState.AddModelError(string.Empty, "Đăng nhập không thành công: Dữ liệu phản hồi không hợp lệ.");
                         return View(model);
                     }
 
-                    // ✅ Lưu JWT vào cookie
+                    // Lưu JWT vào cookie
+                    var tokenHandler = new JwtSecurityTokenHandler();
+                    var jwtToken = tokenHandler.ReadJwtToken(result.Token);
+                    var expiry = jwtToken.ValidTo;
+
                     HttpContext.Response.Cookies.Append("JwtToken", result.Token, new CookieOptions
                     {
                         HttpOnly = true,
                         Secure = true,
                         SameSite = SameSiteMode.Strict,
-                        Expires = DateTime.UtcNow.AddDays(1)
+                        Expires = expiry.ToUniversalTime()
                     });
 
-                    // ✅ Tạo claims
+                    // Tạo claims
                     int role = result.Role;
                     var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, model.Username),
-                new Claim(ClaimTypes.NameIdentifier, result.UserId.ToString()),
-                new Claim(ClaimTypes.Role, role.ToString())
-            };
+                    {
+                        new Claim(ClaimTypes.Name, model.Username),
+                        new Claim(ClaimTypes.NameIdentifier, result.UserId.ToString()),
+                        new Claim(ClaimTypes.Role, role.ToString())
+                    };
 
                     var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                     var authProperties = new AuthenticationProperties
                     {
                         IsPersistent = true,
-                        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(1)
+                        ExpiresUtc = expiry
                     };
 
-                    // ✅ Đăng nhập và lưu thông tin vào session
+                    // Đăng nhập
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
                     HttpContext.Session.SetString("Role", role.ToString());
-                    HttpContext.Session.SetString("UserId", result.UserId.ToString()); // ✅ Thêm dòng này
+                    HttpContext.Session.SetString("UserId", result.UserId.ToString());
 
                     _logger.LogInformation("Đăng nhập thành công cho username: {Username}, UserId: {UserId}, Role: {Role}", model.Username, result.UserId, role);
 
@@ -102,7 +109,6 @@ namespace PhoneStoreMVC.Controllers
             }
         }
 
-
         [HttpGet]
         public IActionResult Register()
         {
@@ -113,7 +119,10 @@ namespace PhoneStoreMVC.Controllers
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
             if (!ModelState.IsValid)
+            {
+                _logger.LogWarning("ModelState không hợp lệ khi đăng ký với username: {Username}", model.Username);
                 return View(model);
+            }
 
             try
             {
@@ -153,10 +162,10 @@ namespace PhoneStoreMVC.Controllers
         {
             try
             {
-                var username = User?.Identity?.Name;
-                if (string.IsNullOrEmpty(username))
+                var userId = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
                 {
-                    _logger.LogWarning("Không tìm thấy username trong claims khi truy cập Profile.");
+                    _logger.LogWarning("Không tìm thấy UserId trong claims khi truy cập Profile.");
                     return RedirectToAction("Login");
                 }
 
@@ -168,30 +177,29 @@ namespace PhoneStoreMVC.Controllers
                 }
 
                 _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-                var response = await _httpClient.GetAsync($"api/Users/search?username={Uri.EscapeDataString(username)}");
+                var response = await _httpClient.GetAsync($"api/Users/{userId}"); // Sử dụng UserId thay vì username
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogWarning("Không thể tải thông tin hồ sơ từ API cho username: {Username}. Mã trạng thái: {StatusCode}, Nội dung lỗi: {ErrorContent}", username, response.StatusCode, errorContent);
+                    _logger.LogWarning("Không thể tải thông tin hồ sơ từ API cho UserId: {UserId}. Mã trạng thái: {StatusCode}, Nội dung lỗi: {ErrorContent}", userId, response.StatusCode, errorContent);
                     ModelState.AddModelError(string.Empty, "Không thể tải thông tin hồ sơ từ API");
                     return View(new UserViewModel());
                 }
 
-                var users = await response.Content.ReadFromJsonAsync<UserViewModel[]>();
-                if (users == null || users.Length == 0)
+                var userProfile = await response.Content.ReadFromJsonAsync<UserViewModel>();
+                if (userProfile == null)
                 {
-                    _logger.LogWarning("Không tìm thấy thông tin người dùng cho username: {Username}", username);
+                    _logger.LogWarning("Không tìm thấy thông tin người dùng cho UserId: {UserId}", userId);
                     ModelState.AddModelError(string.Empty, "Không tìm thấy thông tin người dùng");
                     return View(new UserViewModel());
                 }
 
-                var userProfile = users[0];
-                _logger.LogInformation("Lấy thông tin hồ sơ thành công cho username: {Username}", username);
+                _logger.LogInformation("Lấy thông tin hồ sơ thành công cho UserId: {UserId}", userId);
                 return View(userProfile);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi tải hồ sơ cho username: {Username}", User?.Identity?.Name);
+                _logger.LogError(ex, "Lỗi khi tải hồ sơ cho UserId: {UserId}", User?.FindFirst(ClaimTypes.NameIdentifier)?.Value);
                 ModelState.AddModelError(string.Empty, $"Đã xảy ra lỗi: {ex.Message}");
                 return View(new UserViewModel());
             }
@@ -203,7 +211,7 @@ namespace PhoneStoreMVC.Controllers
         {
             if (!ModelState.IsValid)
             {
-                _logger.LogWarning("ModelState không hợp lệ khi cập nhật hồ sơ cho username: {Username}", model.Username);
+                _logger.LogWarning("ModelState không hợp lệ khi cập nhật hồ sơ cho UserId: {UserId}", model.Id);
                 return View(model);
             }
 
@@ -220,19 +228,19 @@ namespace PhoneStoreMVC.Controllers
                 var response = await _httpClient.PutAsJsonAsync($"api/Users/{model.Id}", model);
                 if (response.IsSuccessStatusCode)
                 {
-                    _logger.LogInformation("Cập nhật hồ sơ thành công cho username: {Username}", model.Username);
+                    _logger.LogInformation("Cập nhật hồ sơ thành công cho UserId: {UserId}", model.Id);
                     TempData["SuccessMessage"] = "Cập nhật hồ sơ thành công";
                     return RedirectToAction("Profile");
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogWarning("Cập nhật hồ sơ thất bại cho username: {Username}. Mã trạng thái: {StatusCode}, Nội dung lỗi: {ErrorContent}", model.Username, response.StatusCode, errorContent);
+                _logger.LogWarning("Cập nhật hồ sơ thất bại cho UserId: {UserId}. Mã trạng thái: {StatusCode}, Nội dung lỗi: {ErrorContent}", model.Id, response.StatusCode, errorContent);
                 ModelState.AddModelError(string.Empty, $"Cập nhật hồ sơ không thành công: {errorContent}");
                 return View(model);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi cập nhật hồ sơ cho username: {Username}", model.Username);
+                _logger.LogError(ex, "Lỗi khi cập nhật hồ sơ cho UserId: {UserId}", model.Id);
                 ModelState.AddModelError(string.Empty, $"Đã xảy ra lỗi: {ex.Message}");
                 return View(model);
             }
