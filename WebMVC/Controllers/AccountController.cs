@@ -43,12 +43,12 @@ namespace PhoneStoreMVC.Controllers
                     var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
                     if (result == null || string.IsNullOrEmpty(result.Token) || result.UserId == 0)
                     {
-                        _logger.LogWarning("API login trả về dữ liệu không hợp lệ cho username: {Username}. Token: {Token}, UserId: {UserId}", model.Username, result?.Token ?? "null", result?.UserId);
+                        _logger.LogWarning("API login trả về dữ liệu không hợp lệ cho username: {Username}.", model.Username);
                         ModelState.AddModelError(string.Empty, "Đăng nhập không thành công: Dữ liệu phản hồi không hợp lệ.");
                         return View(model);
                     }
 
-                    // Lưu token vào cookie
+                    // ✅ Lưu JWT vào cookie
                     HttpContext.Response.Cookies.Append("JwtToken", result.Token, new CookieOptions
                     {
                         HttpOnly = true,
@@ -57,13 +57,14 @@ namespace PhoneStoreMVC.Controllers
                         Expires = DateTime.UtcNow.AddDays(1)
                     });
 
+                    // ✅ Tạo claims
                     int role = result.Role;
                     var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.Name, model.Username),
-                        new Claim(ClaimTypes.NameIdentifier, result.UserId.ToString()),
-                        new Claim(ClaimTypes.Role, role.ToString())
-                    };
+            {
+                new Claim(ClaimTypes.Name, model.Username),
+                new Claim(ClaimTypes.NameIdentifier, result.UserId.ToString()),
+                new Claim(ClaimTypes.Role, role.ToString())
+            };
 
                     var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                     var authProperties = new AuthenticationProperties
@@ -72,8 +73,10 @@ namespace PhoneStoreMVC.Controllers
                         ExpiresUtc = DateTimeOffset.UtcNow.AddDays(1)
                     };
 
+                    // ✅ Đăng nhập và lưu thông tin vào session
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
                     HttpContext.Session.SetString("Role", role.ToString());
+                    HttpContext.Session.SetString("UserId", result.UserId.ToString()); // ✅ Thêm dòng này
 
                     _logger.LogInformation("Đăng nhập thành công cho username: {Username}, UserId: {UserId}, Role: {Role}", model.Username, result.UserId, role);
 
@@ -87,7 +90,7 @@ namespace PhoneStoreMVC.Controllers
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogWarning("Đăng nhập thất bại cho username: {Username}. Mã trạng thái: {StatusCode}, Nội dung lỗi: {ErrorContent}", model.Username, response.StatusCode, errorContent);
+                _logger.LogWarning("Đăng nhập thất bại. Trạng thái: {StatusCode}, Lỗi: {ErrorContent}", response.StatusCode, errorContent);
                 ModelState.AddModelError(string.Empty, "Thông tin đăng nhập không đúng");
                 return View(model);
             }
@@ -98,6 +101,7 @@ namespace PhoneStoreMVC.Controllers
                 return View(model);
             }
         }
+
 
         [HttpGet]
         public IActionResult Register()

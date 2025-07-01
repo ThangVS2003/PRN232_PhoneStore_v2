@@ -1,0 +1,89 @@
+﻿@model PhoneStoreMVC.ViewModels.OrderDetailViewModel
+
+@{
+    ViewData["Title"] = $"Order #@Model.OrderId";
+    var statusColors = new Dictionary<string, string>
+    {
+        { "processing", "primary" },
+        { "shipping", "warning text-dark" },
+        { "delivered", "success" },
+        { "cancelled", "danger" }
+    };
+
+    var statusKey = (Model.Status ?? "processing").ToLower();
+    var badgeClass = statusColors.ContainsKey(statusKey) ? statusColors[statusKey] : "secondary";
+
+    string FormatPrice(decimal? amount) => amount.HasValue ? string.Format("{0:N0} ₫", amount.Value) : "—";
+}
+
+<div class="container py-5">
+    <h2 class="mb-3">Order #@Model.OrderId</h2>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <p><strong>Date:</strong> @Model.OrderDate?.ToString("MMM dd, yyyy")</p>
+            <p><strong>Status:</strong> <span class="badge bg-@badgeClass">@Model.Status</span></p>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <p><strong>Total:</strong> @FormatPrice(Model.TotalAmount)</p>
+            <p><strong>Shipping Address:</strong><br /> @Model.ShippingAddress</p>
+        </div>
+    </div>
+
+    <h5 class="mb-3">Products in this Order:</h5>
+
+    @if (Model.Products != null && Model.Products.Count > 0)
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 80px;">Image</th>
+                        <th>Product</th>
+                        <th>Version</th>
+                        <th>Color</th>
+                        <th class="text-center">Quantity</th>
+                        <th class="text-end">Unit Price</th>
+                        <th class="text-end">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Products)
+                    {
+                        var unitPrice = item.UnitPrice ?? 0m;
+                        var subtotal = item.Quantity * unitPrice;
+
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrEmpty(item.Image))
+                                {
+                                    <img src="@item.Image" alt="Product Image" class="img-fluid rounded" style="max-height: 60px;" />
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No image</span>
+                                }
+                            </td>
+                            <td>@item.ProductName</td>
+                            <td>@item.VersionName</td>
+                            <td>@item.ColorName</td>
+                            <td class="text-center">@item.Quantity</td>
+                            <td class="text-end">@FormatPrice(item.UnitPrice)</td>
+                            <td class="text-end">@FormatPrice(subtotal)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning text-center mt-4">
+            No products found for this order.
+        </div>
+    }
+
+    <a href="@Url.Action("History", "Order")" class="btn btn-outline-secondary mt-4">
+        ← Back to Order History
+    </a>
+</div>
