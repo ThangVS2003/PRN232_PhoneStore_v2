@@ -137,5 +137,23 @@ namespace WebMVC.Controllers
             }
         }
 
+        [HttpDelete("Delete/{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var response = await _httpClient.DeleteAsync($"vouchers/{id}");
+
+                if (response.IsSuccessStatusCode)
+                    return Ok();
+
+                var error = await response.Content.ReadAsStringAsync();
+                return BadRequest(error);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Lỗi khi xóa voucher: " + ex.Message);
+            }
+        }
     }
 }

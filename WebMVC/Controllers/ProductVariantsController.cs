@@ -21,6 +21,35 @@ namespace WebMVC.Controllers
             _httpClient.BaseAddress = new Uri("https://localhost:7026/api/");
         }
 
+        [HttpGet("Serial/{variantId}")]
+        public async Task<IActionResult> Serial(int variantId, int productId)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"serials/variant/{variantId}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    ViewBag.ProductId = productId;
+                    ViewBag.VariantId = variantId;
+                    return View("~/Views/Staff/Products/Serial.cshtml", new List<SerialViewModel>());
+                }
+
+                var content = await response.Content.ReadAsStringAsync();
+                var serials = JsonSerializer.Deserialize<List<SerialViewModel>>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                ViewBag.ProductId = productId;
+                ViewBag.VariantId = variantId;
+                return View("~/Views/Staff/Products/Serial.cshtml", serials);
+            }
+            catch
+            {
+                return View("Error");
+            }
+        }
+
         [HttpPost("CreateVariant")]
         public async Task<IActionResult> Create([FromBody] ProductVariantCreateViewModel dto)
         {

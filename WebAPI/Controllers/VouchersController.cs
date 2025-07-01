@@ -109,14 +109,14 @@ namespace PhoneStoreAPI.Controllers
             return Ok("Đã xóa thành công");
         }
 
-        [HttpPut("{id}/toggle-status")]
-        public async Task<IActionResult> ToggleStatus(int id)
-        {
-            var success = await _voucherService.ToggleActiveStatusAsync(id);
-            if (!success)
-                return NotFound("Voucher not found or update failed");
+        //[HttpPut("{id}/toggle-status")]
+        //public async Task<IActionResult> ToggleStatus(int id)
+        //{
+        //    var success = await _voucherService.ToggleActiveStatusAsync(id);
+        //    if (!success)
+        //        return NotFound("Voucher not found or update failed");
 
-            return Ok("Voucher status updated successfully");
-        }
+        //    return Ok("Voucher status updated successfully");
+        //}
     }
 }

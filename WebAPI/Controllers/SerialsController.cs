@@ -39,6 +39,25 @@ namespace PhoneStoreAPI.Controllers
             return Ok(serials);
         }
 
+        [HttpGet("search-by-productVariantId")]
+        public async Task<IActionResult> SearchByProductVariantId([FromQuery] string serialNumber, [FromQuery] int? productVariantId)
+        {
+            var serials = await _serialService.SearchByProductVariantIdAsync(serialNumber, productVariantId);
+
+            if (serials == null || !serials.Any())
+                return NotFound("No matching serials found");
+
+            var dtoList = serials.Select(s => new SerialDto
+            {
+                Id = s.Id,
+                ProductVariantId = s.ProductVariantId,
+                SerialNumber = s.SerialNumber,
+                Status = s.Status
+            }).ToList();
+
+            return Ok(dtoList);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] SerialDto dto)
         {
@@ -96,6 +115,24 @@ namespace PhoneStoreAPI.Controllers
 
             await _serialService.DeleteAsync(id);
             return Ok("Đã xóa thành công");
+        }
+
+        [HttpGet("variant/{productVariantId}")]
+        public async Task<IActionResult> GetByProductVariantId(int productVariantId)
+        {
+            var serials = await _serialService.GetByProductVariantIdAsync(productVariantId);
+            if (serials == null || !serials.Any())
+                return NotFound("No serials found for this product variant");
+
+            var dtoList = serials.Select(s => new SerialDto
+            {
+                Id = s.Id,
+                ProductVariantId = s.ProductVariantId,
+                SerialNumber = s.SerialNumber,
+                Status = s.Status
+            }).ToList();
+
+            return Ok(dtoList);
         }
     }
 }

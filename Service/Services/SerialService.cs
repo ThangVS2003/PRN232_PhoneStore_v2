@@ -33,6 +33,11 @@ namespace Service.Service
             return await _serialRepository.SearchAsync(keyword);
         }
 
+        public async Task<List<Serial>> SearchByProductVariantIdAsync(string keyword, int? productVariantId)
+        {
+            return await _serialRepository.SearchByProductVariantIdAsync(keyword, productVariantId);
+        }
+
         public async Task AddAsync(Serial serial)
         {
             await _serialRepository.AddAsync(serial);
@@ -46,6 +51,11 @@ namespace Service.Service
         public async Task DeleteAsync(int id)
         {
             await _serialRepository.DeleteAsync(id);
+        }
+
+        public async Task<List<Serial>> GetByProductVariantIdAsync(int productVariantId)
+        {
+            return await _serialRepository.GetByProductVariantIdAsync(productVariantId);
         }
     }
 }

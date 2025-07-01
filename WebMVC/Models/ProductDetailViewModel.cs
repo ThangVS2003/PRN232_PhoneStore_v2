@@ -70,6 +70,14 @@
         public string Image { get; set; } = "";
     }
 
+    public class SerialViewModel
+    {
+        public int Id { get; set; }
+        public int ProductVariantId { get; set; }
+        public string SerialNumber { get; set; } = "";
+        public string? Status { get; set; }
+    }
+
     public class ColorViewModel
     {
         public int Id { get; set; }
