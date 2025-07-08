@@ -34,7 +34,6 @@ namespace PhoneStoreMVC.Controllers
                 var url = $"api/Users/search?username={Uri.EscapeDataString(username)}";
                 Console.WriteLine($"Requesting API: {url}");
 
-                // Thêm token nếu có (dựa trên session từ Login)
                 var token = HttpContext.Session.GetString("Token");
                 if (!string.IsNullOrEmpty(token))
                 {

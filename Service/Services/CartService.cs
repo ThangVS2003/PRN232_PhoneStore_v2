@@ -29,13 +29,13 @@ namespace Service.Service
 
         public async Task<Order> GetCartByUserIdAsync(int userId)
         {
-            var cart = await _orderRepository.GetByUserIdAndStatusAsync(userId, "Cart");
+            var cart = await _orderRepository.GetByUserIdAndStatusAsync(userId, "Processing");
             if (cart == null)
             {
                 cart = new Order
                 {
                     UserId = userId,
-                    Status = "Cart",
+                    Status = "Processing",
                     OrderDate = DateTime.Now,
                     TotalAmount = 0,
                     OrderDetails = new List<OrderDetail>()
@@ -118,7 +118,7 @@ namespace Service.Service
         public async Task ApplyVoucherAsync(int orderId, string voucherCode)
         {
             var cart = await _orderRepository.GetByIdAsync(orderId);
-            if (cart == null || cart.Status != "Cart")
+            if (cart == null || cart.Status != "Processing")
             {
                 throw new Exception("Không tìm thấy giỏ hàng.");
             }
