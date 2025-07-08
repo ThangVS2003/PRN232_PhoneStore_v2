@@ -123,6 +123,10 @@ namespace PhoneStoreAPI.Controllers
             if (existing == null)
                 return NotFound("Product variant not found");
 
+            var hasOrderDetail = await _productVariantService.HasOrderDetailAsync(id);
+            if (hasOrderDetail)
+                return BadRequest("Không thể xóa vì sản phẩm này đã tồn tại trong đơn hàng.");
+
             await _productVariantService.DeleteAsync(id);
             return Ok("Đã xóa thành công");
         }

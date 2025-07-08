@@ -100,5 +100,72 @@ namespace WebMVC.Controllers
                 return View("Error");
             }
         }
+
+        [HttpPost("Create")]
+        public async Task<IActionResult> Create([FromBody] SerialViewModel dto)
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(dto);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync("serials", content);
+
+                if (response.IsSuccessStatusCode)
+                    return Ok();
+
+                var error = await response.Content.ReadAsStringAsync();
+                return BadRequest(error);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Lỗi khi tạo Serial: " + ex.Message);
+            }
+        }
+
+        [HttpPut("Update/{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] SerialViewModel dto)
+        {
+            try
+            {
+                if (id != dto.Id)
+                    return BadRequest("ID không khớp.");
+
+                var json = JsonSerializer.Serialize(dto);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PutAsync($"serials/{id}", content);
+
+                if (response.IsSuccessStatusCode)
+                    return Ok();
+
+                var error = await response.Content.ReadAsStringAsync();
+                return BadRequest(error);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Lỗi khi cập nhật Serial: " + ex.Message);
+            }
+        }
+
+        [HttpDelete("Delete/{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var response = await _httpClient.DeleteAsync($"serials/{id}");
+
+                if (response.IsSuccessStatusCode)
+                    return Ok();
+
+                var error = await response.Content.ReadAsStringAsync();
+                return BadRequest(error);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Lỗi khi xóa serial: " + ex.Message);
+            }
+        }
+
     }
 }

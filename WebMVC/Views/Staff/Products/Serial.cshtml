@@ -79,7 +79,9 @@
                                             Edit
                                         </button>
 
-                                        <button class="btn btn-danger btn-sm">Delete</button>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteSerial(@serial.Id)">
+                                            Delete
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -164,7 +166,7 @@
         $('#serialModal').modal('show');
     }
 
-    async function submitSerialForm(event) {
+        async function submitSerialForm(event) {
         event.preventDefault();
 
         const form = document.getElementById("serialForm");
@@ -178,7 +180,7 @@
         };
 
         if (!data.SerialNumber || !data.Status) {
-            alert("Please fill in all fields.");
+            alert("Vui lòng nhập đầy đủ thông tin.");
             return;
         }
 
@@ -200,14 +202,40 @@
                 location.reload();
             } else {
                 const err = await response.text();
-                alert("Error: " + err);
+                if (err.includes("trùng Serial")) {
+                    alert("Serial Number already exists. Please choose a different.");
+                } else {
+                    alert("Failed: " + err);
+                }
             }
         } catch (error) {
-            alert("Error: " + error);
+            alert("Lỗi: " + error);
         }
     }
 
     $('#serialModal').on('hidden.bs.modal', function () {
         resetSerialForm();
     });
+</script>
+
+<script>
+    async function deleteSerial(id) {
+        if (!confirm("Bạn có chắc chắn muốn xóa serial này?")) return;
+
+        try {
+            const response = await fetch(`/Serials/Delete/${id}`, {
+                method: "DELETE"
+            });
+
+            if (response.ok) {
+                alert("Xóa serial thành công.");
+                location.reload();
+            } else {
+                const error = await response.text();
+                alert("Xóa serial thất bại: " + error);
+            }
+        } catch (err) {
+            alert("Đã xảy ra lỗi: " + err);
+        }
+    }
 </script>

@@ -43,6 +43,11 @@ namespace Service.Service
             await _productVariantRepository.UpdateAsync(productVariant);
         }
 
+        public async Task<bool> HasOrderDetailAsync(int id)
+        {
+            return await _productVariantRepository.HasOrderDetailAsync(id);
+        }
+
         public async Task DeleteAsync(int id)
         {
             await _productVariantRepository.DeleteAsync(id);

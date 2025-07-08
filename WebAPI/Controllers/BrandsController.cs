@@ -52,6 +52,13 @@ namespace PhoneStoreAPI.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // Kiểm tra tên đã tồn tại hay chưa
+            var existingBrands = await _brandService.SearchAsync(dto.Name);
+            if (existingBrands.Any(b => b.Name.Trim().ToLower() == dto.Name.Trim().ToLower()))
+            {
+                return BadRequest("Tên thương hiệu đã tồn tại.");
+            }
+
             var brand = new Brand
             {
                 Name = dto.Name,
@@ -60,7 +67,7 @@ namespace PhoneStoreAPI.Controllers
 
             await _brandService.AddAsync(brand);
 
-            dto.Id = brand.Id; // Gán lại id sau khi lưu
+            dto.Id = brand.Id;
 
             return CreatedAtAction(nameof(Get), new { id = dto.Id }, dto);
         }
@@ -75,7 +82,13 @@ namespace PhoneStoreAPI.Controllers
             if (existingBrand == null)
                 return NotFound();
 
-            // Cập nhật 3 thuộc tính
+            // Kiểm tra tên đã tồn tại (trừ chính nó)
+            var existingBrands = await _brandService.SearchAsync(dto.Name);
+            if (existingBrands.Any(b => b.Name.Trim().ToLower() == dto.Name.Trim().ToLower() && b.Id != id))
+            {
+                return BadRequest("Tên thương hiệu đã tồn tại.");
+            }
+
             existingBrand.Name = dto.Name;
             existingBrand.Description = dto.Description;
 

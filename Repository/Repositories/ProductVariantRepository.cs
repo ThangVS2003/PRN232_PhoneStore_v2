@@ -61,6 +61,12 @@ namespace Repository.Repository
             await _context.SaveChangesAsync();
         }
 
+        public async Task<bool> HasOrderDetailAsync(int productVariantId)
+        {
+            return await _context.OrderDetails
+                .AnyAsync(od => od.ProductVariantId == productVariantId);
+        }
+
         public async Task DeleteAsync(int id)
         {
             var productVariant = await _context.Set<ProductVariant>().FindAsync(id);

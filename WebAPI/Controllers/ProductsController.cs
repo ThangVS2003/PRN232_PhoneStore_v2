@@ -220,6 +220,22 @@ namespace PhoneStoreAPI.Controllers
             if (existing == null)
                 return NotFound();
 
+            // Kiểm tra nếu có ProductVariant tồn tại trong OrderDetail
+            var hasLinkedVariants = existing.ProductVariants.Any(variant =>
+                variant.OrderDetails != null && variant.OrderDetails.Any());
+
+            if (hasLinkedVariants)
+            {
+                var variantIds = existing.ProductVariants
+                    .Where(v => v.OrderDetails != null && v.OrderDetails.Any())
+                    .Select(v => v.Id)
+                    .ToList();
+
+                var variantIdString = string.Join(", ", variantIds);
+                var errorMessage = $"Không thể xóa sản phẩm vì có biến thể đã được đặt hàng ({variantIdString}).";
+                return BadRequest(errorMessage);
+            }
+
             await _productService.DeleteAsync(id);
             return Ok("Đã xóa thành công");
         }

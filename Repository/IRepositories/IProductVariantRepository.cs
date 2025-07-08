@@ -14,6 +14,7 @@ namespace Repository.IRepository
         Task<List<ProductVariant>> GetByProductIdAsync(int productId);
         Task AddAsync(ProductVariant productVariant);
         Task UpdateAsync(ProductVariant productVariant);
+        Task<bool> HasOrderDetailAsync(int productVariantId);
         Task DeleteAsync(int id);
         Task RestoreAsync(int id);
     }

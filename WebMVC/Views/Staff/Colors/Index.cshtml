@@ -1,0 +1,202 @@
+﻿@model List<WebMVC.Models.ColorViewModel>
+
+@{
+    ViewData["Title"] = "Color List";
+    Layout = "~/Views/Shared/_LayoutStaff.cshtml";
+}
+
+<!-- Nút Add Color -->
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2 align-items-center">
+            <div class="col-sm-6">
+                <h1>Danh sách Màu sắc</h1>
+            </div>
+            <div class="col-sm-6 text-right">
+                <button class="btn btn-success" data-toggle="modal" data-target="#addColorModal">
+                    <i class="fas fa-plus"></i> Add Color
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="box">
+        <div class="box-header with-border">
+            <form method="get" action="/Colors/Search" class="form-inline mb-3">
+                <div class="form-group mr-2">
+                    <input type="text" name="name" value="@ViewBag.SelectedName" placeholder="Color Name..." class="form-control" />
+                </div>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+        <div class="box-body table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+                                <td>
+                                    <div style="display: flex; justify-content: center; gap: 6px;">
+                                        <a href="javascript:void(0);" class="btn btn-warning btn-sm"
+                                           data-id="@item.Id"
+                                           data-name="@item.Name"
+                                           onclick="openEditColorModal(this)">
+                                            Edit
+                                        </a>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteColor(@item.Id)">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="3" class="text-center text-danger font-weight-bold">No colors available.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- Modal Thêm / Sửa Color -->
+<div class="modal fade" id="addColorModal" tabindex="-1" role="dialog" aria-labelledby="addColorModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <!-- HEADER -->
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <h5 class="modal-title font-weight-bold mb-0">Add New Color</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="resetAddColorForm()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!-- FORM -->
+            <form id="addColorForm" onsubmit="submitAddColorForm(event)">
+                <div class="modal-body">
+                    <input type="hidden" name="Id" />
+
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" name="Name" class="form-control" required />
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="resetAddColorForm()">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Color</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    async function submitAddColorForm(event) {
+        event.preventDefault();
+        const form = document.getElementById("addColorForm");
+        const formData = new FormData(form);
+        const colorId = formData.get("Id");
+
+        const data = {
+            Id: parseInt(colorId) || 0,
+            Name: formData.get("Name").trim()
+        };
+
+        if (!data.Name) {
+            alert("Color name is required.");
+            return;
+        }
+
+        try {
+            const url = data.Id > 0 ? `/Colors/Update/${data.Id}` : "/Colors/Create";
+            const method = data.Id > 0 ? "PUT" : "POST";
+
+            const response = await fetch(url, {
+                method: method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                $('#addColorModal').modal('hide');
+                resetAddColorForm();
+                alert(data.Id > 0 ? "Color updated successfully." : "Color added successfully.");
+                location.reload();
+            } else {
+                const err = await response.text();
+                if (err.includes("trùng tên Color")) {
+                    alert("Tên màu đã tồn tại.");
+                } else {
+                    alert("Failed: " + err);
+                }
+            }
+        } catch (error) {
+            alert("Error: " + error);
+        }
+    }
+
+    function resetAddColorForm() {
+        const form = document.getElementById("addColorForm");
+        if (form) {
+            form.reset();
+            form.querySelector('input[name="Id"]').value = "";
+        }
+    }
+
+    function openEditColorModal(button) {
+        const modal = $('#addColorModal');
+        modal.find('.modal-title').text("Edit Color");
+
+        const form = document.getElementById("addColorForm");
+        form.querySelector('input[name="Id"]').value = button.dataset.id;
+        form.querySelector('input[name="Name"]').value = button.dataset.name;
+
+        modal.modal('show');
+    }
+
+    $('#addColorModal').on('hidden.bs.modal', function () {
+        resetAddColorForm();
+        $(this).find('.modal-title').text("Add New Color");
+    });
+
+    async function deleteColor(id) {
+        if (!confirm("Bạn có chắc chắn muốn xóa màu này?")) return;
+
+        try {
+            const response = await fetch(`/Colors/Delete/${id}`, {
+                method: "DELETE"
+            });
+
+            if (response.ok) {
+                alert("Xóa màu thành công.");
+                location.reload();
+            } else {
+                const error = await response.text();
+                alert("Xóa thất bại: " + error);
+            }
+        } catch (err) {
+            alert("Đã xảy ra lỗi: " + err);
+        }
+    }
+</script>

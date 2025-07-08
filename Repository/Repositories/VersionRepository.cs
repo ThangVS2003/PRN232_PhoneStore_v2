@@ -40,6 +40,7 @@ namespace Repository.Repository
 
             if (!string.IsNullOrEmpty(keyword))
             {
+                keyword = keyword.Trim();
                 query = query.Where(v => v.Name.Contains(keyword));
             }
 
