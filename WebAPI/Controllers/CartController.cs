@@ -7,6 +7,7 @@ using Repository.IRepositories;
 using Microsoft.Extensions.Logging;
 using Repository.IRepository;
 using Service.IService;
+using Microsoft.AspNetCore.Authorization;
 
 namespace PhoneStoreAPI.Controllers
 {
@@ -32,6 +33,7 @@ namespace PhoneStoreAPI.Controllers
         }
 
         [HttpPost("add")]
+        [Authorize]
         public async Task<IActionResult> AddToCart([FromBody] AddToCartDto dto)
         {
             try
@@ -56,6 +58,7 @@ namespace PhoneStoreAPI.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetCart()
         {
             try
@@ -107,6 +110,7 @@ namespace PhoneStoreAPI.Controllers
         }
 
         [HttpPost("apply-voucher")]
+        [Authorize]
         public async Task<IActionResult> ApplyVoucher([FromBody] ApplyVoucherDto dto)
         {
             try
@@ -138,6 +142,7 @@ namespace PhoneStoreAPI.Controllers
         }
 
         [HttpPut("update/{orderDetailId}")]
+        [Authorize]
         public async Task<IActionResult> UpdateCartItem(int orderDetailId, [FromBody] UpdateCartItemDto dto)
         {
             try
@@ -163,6 +168,7 @@ namespace PhoneStoreAPI.Controllers
         }
 
         [HttpDelete("remove/{orderDetailId}")]
+        [Authorize]
         public async Task<IActionResult> RemoveCartItem(int orderDetailId)
         {
             try
@@ -182,6 +188,7 @@ namespace PhoneStoreAPI.Controllers
         }
 
         [HttpGet("count")]
+        [Authorize]
         public async Task<IActionResult> GetCartCount()
         {
             try
