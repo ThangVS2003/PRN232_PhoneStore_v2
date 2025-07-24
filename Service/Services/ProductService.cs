@@ -15,14 +15,14 @@ namespace Service.Service
             _productRepository = productRepository;
         }
 
-        public async Task<List<Product>> GetAllAsync()
+        public async Task<List<Product>> GetAllAsync(bool includeDeleted = false)
         {
-            return await _productRepository.GetAllAsync();
+            return await _productRepository.GetAllAsync(includeDeleted);
         }
 
-        public async Task<Product> GetByIdAsync(int id)
+        public async Task<Product> GetByIdAsync(int id, bool includeDeleted = false)
         {
-            return await _productRepository.GetByIdAsync(id);
+            return await _productRepository.GetByIdAsync(id, includeDeleted);
         }
 
         public async Task<List<Product>> SearchAsync(string? name, int? brandId, decimal? minPrice, decimal? maxPrice)
@@ -79,14 +79,9 @@ namespace Service.Service
             return await _productRepository.GetByNameAndBrandIdAsync(name, brandId);
         }
 
-        public async Task<List<Product>> GetAllIncludeDeletedAsync()
+        public async Task<List<Product>> SearchByNameAsync(string keyword)
         {
-            return await _productRepository.GetAllIncludeDeletedAsync();
-        }
-
-        public async Task<Product> GetByIdIncludeDeletedAsync(int id)
-        {
-            return await _productRepository.GetByIdIncludeDeletedAsync(id);
+            return await _productRepository.SearchByNameAsync(keyword);
         }
     }
 }

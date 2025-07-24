@@ -16,24 +16,58 @@ namespace PhoneStoreAPI.Controllers
             _productVariantService = productVariantService;
         }
 
+        //[HttpGet]
+        //public async Task<IActionResult> Get()
+        //{
+        //    var variants = await _productVariantService.GetAllAsync();
+
+        //    var dtos = variants.Select(v => new ProductVariantDto
+        //    {
+        //        Id = v.Id,
+        //        ProductId = v.ProductId,
+        //        ProductName = v.Product.Name,
+        //        ColorId = v.ColorId,
+        //        VersionId = v.VersionId,
+        //        OriginalPrice = v.OriginalPrice,
+        //        SellingPrice = v.SellingPrice,
+        //        StockQuantity = v.StockQuantity,
+        //        Image = v.Image
+        //    }).ToList();
+
+        //    return Ok(dtos);
+        //}
+
+        // GET: api/ProductVariants?page=1&pageSize=5
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] int page = 1, [FromQuery] int pageSize = 5)
         {
             var variants = await _productVariantService.GetAllAsync();
+            var totalItems = variants.Count;
 
-            var dtos = variants.Select(v => new ProductVariantDto
+            var paged = variants
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(v => new
+                {
+                    v.Id,
+                    v.ProductId,
+                    ProductName = v.Product.Name,
+                    Color = v.Color?.Name ?? "Unknown",
+                    Version = v.Version?.Name ?? "Unknown",
+                    v.SellingPrice,
+                    v.OriginalPrice,
+                    v.StockQuantity,
+                    v.Image,
+                    v.IsDeleted
+                });
+
+            return Ok(new
             {
-                Id = v.Id,
-                ProductId = v.ProductId,
-                ColorId = v.ColorId,
-                VersionId = v.VersionId,
-                OriginalPrice = v.OriginalPrice,
-                SellingPrice = v.SellingPrice,
-                StockQuantity = v.StockQuantity,
-                Image = v.Image
-            }).ToList();
-
-            return Ok(dtos);
+                Data = paged,
+                TotalItems = totalItems,
+                Page = page,
+                PageSize = pageSize
+            });
         }
 
         [HttpGet("{id}")]
@@ -44,6 +78,39 @@ namespace PhoneStoreAPI.Controllers
                 return NotFound("Product variant not found");
 
             return Ok(variant);
+        }
+
+        // GET: api/ProductVariants/search? productName = ...&color=...&version=...&page=1&pageSize=5
+        [HttpGet("search")]
+        public async Task<IActionResult> Search([FromQuery] string productName, [FromQuery] string color, [FromQuery] string version, [FromQuery] int page = 1, [FromQuery] int pageSize = 5)
+        {
+            var variants = await _productVariantService.SearchAsync(productName, color, version);
+            var totalItems = variants.Count;
+
+            var paged = variants
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(v => new
+                {
+                    v.Id,
+                    v.ProductId,
+                    ProductName = v.Product.Name,
+                    Color = v.Color?.Name ?? "Unknown",
+                    Version = v.Version?.Name ?? "Unknown",
+                    v.SellingPrice,
+                    v.OriginalPrice,
+                    v.StockQuantity,
+                    v.Image,
+                    v.IsDeleted
+                });
+
+            return Ok(new
+            {
+                Data = paged,
+                TotalItems = totalItems,
+                Page = page,
+                PageSize = pageSize
+            });
         }
 
         [HttpGet("by-product/{productId}")]

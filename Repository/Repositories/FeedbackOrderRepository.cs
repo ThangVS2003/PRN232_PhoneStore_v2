@@ -67,5 +67,14 @@ namespace Repository.Repository
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<List<FeedbackOrder>> GetByOrderIdAsync(int orderId)
+        {
+            return await _context.FeedbackOrders
+                                 .Include(fp => fp.Order)
+                                 .Include(fp => fp.User)
+                                 .Where(fp => fp.OrderId == orderId)
+                                 .ToListAsync();
+        }
     }
 }

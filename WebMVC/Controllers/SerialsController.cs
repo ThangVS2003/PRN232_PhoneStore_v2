@@ -52,8 +52,8 @@ namespace WebMVC.Controllers
         }
 
         // Search theo SerialNumber + ProductVariantId
-        [HttpGet("Search")]
-        public async Task<IActionResult> Search(string serialNumber, int variantId, int productId)
+        [HttpGet("Search-by-productVariantId")]
+        public async Task<IActionResult> SearchByProductVariantId(string serialNumber, int variantId, int productId)
         {
             try
             {

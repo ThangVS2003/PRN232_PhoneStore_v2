@@ -4,6 +4,7 @@
     {
         public int Id { get; set; }
         public int ProductId { get; set; }
+        // public string ProductName { get; set; }
         public int? ColorId { get; set; }
         public int? VersionId { get; set; }
         public decimal OriginalPrice { get; set; }

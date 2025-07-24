@@ -14,7 +14,7 @@
                 <h1>Danh sách sản phẩm</h1>
             </div>
             <div class="col-sm-6 text-right">
-                <button class="btn btn-success" style="background-color: #28a745; color: white;" data-toggle="modal" data-target="#addProductModal">
+                <button class="btn btn-success" style="background-color: #28a745; color: white;" onclick="openAddProductModal()">
                     <i class="fas fa-plus"></i> Add Product
                 </button>
             </div>
@@ -86,7 +86,7 @@
                                 </td>
                                 <td>
                                     <div style="display: flex; justify-content: center; gap: 6px;">
-                                        <a href="@Url.Action("Details", "Products", new { id = item.Id })" class="btn btn-info btn-sm" style="background-color: #4285F4; color: white;">Details</a>
+                                        <a href="@Url.Action("Details", "Products", new { id = item.Id })" class="btn btn-info btn-sm" style="background-color: #4285F4; color: white;">Variants</a>
                                         <a href="javascript:void(0);"
                                            class="btn btn-warning btn-sm"
                                            data-id="@item.Id"
@@ -123,252 +123,208 @@
                     }
                 </tbody>
             </table>
+            <div class="text-center">
+    <ul class="pagination">
+        @{
+            int currentPage = ViewBag.CurrentPage;
+            int totalPages = ViewBag.TotalPages;
+            bool isSearch = ViewBag.IsSearch ?? false;
+
+            // Tính trang Prev & Next
+            int prevPage = currentPage > 1 ? currentPage - 1 : 1;
+            int nextPage = currentPage < totalPages ? currentPage + 1 : totalPages;
+
+            string prevUrl = isSearch
+                ? Url.Action("Search", "Products", new { name = selectedName, brandId = selectedBrandId, page = prevPage })
+                : Url.Action("Index", "Products", new { page = prevPage });
+
+            string nextUrl = isSearch
+                ? Url.Action("Search", "Products", new { name = selectedName, brandId = selectedBrandId, page = nextPage })
+                : Url.Action("Index", "Products", new { page = nextPage });
+        }
+
+        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+            <a class="page-link" href="@(currentPage == 1 ? "#" : prevUrl)">Prev</a>
+        </li>
+
+        @for (int i = 1; i <= totalPages; i++)
+        {
+            var active = (i == currentPage) ? "active" : "";
+            string url = isSearch
+                ? Url.Action("Search", "Products", new { name = selectedName, brandId = selectedBrandId, page = i })
+                : Url.Action("Index", "Products", new { page = i });
+
+            <li class="page-item @active">
+                <a class="page-link" href="@url">@i</a>
+            </li>
+        }
+
+        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+            <a class="page-link" href="@(currentPage == totalPages ? "#" : nextUrl)">Next</a>
+        </li>
+    </ul>
+</div>
+
         </div>
     </div>
 </section>
 
+<!-- Modal Thêm / Chỉnh sửa Sản phẩm -->
+<div class="modal fade" id="productModal" tabindex="-1" role="dialog" aria-labelledby="productModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
 
-<!-- Modal Thêm Sản Phẩm -->
-<div class="modal fade" id="addProductModal" tabindex="-1" role="dialog" aria-labelledby="addProductModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
+      <!-- HEADER -->
+      <div class="modal-header d-flex justify-content-between align-items-center">
+        <h5 class="modal-title font-weight-bold mb-0" id="productModalTitle" style="font-size: 20px;"></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="resetProductForm()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
 
-            <!-- HEADER -->
-            <div class="modal-header d-flex justify-content-between align-items-center">
-                <h5 class="modal-title font-weight-bold mb-0" style="font-size: 20px;">Add New Product</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="resetAddProductForm()">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
+      <!-- FORM -->
+      <form id="productForm" onsubmit="submitProductForm(event)">
+        <div class="modal-body">
+          <input type="hidden" name="Id" /> <!-- Id: null hoặc >0 -->
 
-            <!-- FORM -->
-            <form id="addProductForm" onsubmit="submitAddProductForm(event)">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Product Name</label>
-                        <input type="text" name="Name" class="form-control" required />
-                    </div>
+          <div class="form-group">
+            <label>Product Name</label>
+            <input type="text" name="Name" class="form-control" required />
+          </div>
 
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea name="Description" class="form-control" required></textarea>
-                    </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea name="Description" class="form-control" required></textarea>
+          </div>
 
-                    <div class="form-group">
-                        <label>Brand</label>
-                        <select name="BrandName" class="form-control" required>
-                            <option value="" selected disabled>Select Brand</option>
-                            @foreach (var item in ViewBag.Brands as List<SelectListItem>)
-                            {
-                                if (item.Value != "0") // Bỏ "All"
-                                {
-                                    <option value="@item.Text">@item.Text</option> <!-- gửi BrandName -->
-                                }
-                            }
-                        </select>
-                    </div>
+          <div class="form-group">
+            <label>Brand</label>
+            <select name="BrandName" class="form-control" required>
+              <option value="" disabled>Select Brand</option>
+              @foreach (var item in ViewBag.Brands as List<SelectListItem>)
+              {
+                  if (item.Value != "0")
+                  {
+                      <option value="@item.Text">@item.Text</option>
+                  }
+              }
+            </select>
+          </div>
 
-                    <div class="form-group">
-                        <label>Main Image URL</label>
-                        <input type="text" name="MainImage" class="form-control" />
-                    </div>
-                </div>
-
-                <!-- FOOTER -->
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="resetAddProductForm()">Close</button>
-                    <button type="submit" class="btn btn-primary">Save Product</button>
-                </div>
-            </form>
-
+          <div class="form-group">
+            <label>Main Image URL</label>
+            <input type="text" name="MainImage" class="form-control" />
+          </div>
         </div>
+
+        <!-- FOOTER -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="resetProductForm()">Close</button>
+          <button type="submit" class="btn btn-primary" id="productModalSubmitBtn"></button>
+        </div>
+      </form>
+
     </div>
+  </div>
 </div>
 
-
-<!-- Logic Thêm Sản Phẩm -->
+<!-- Logic Thêm / Chỉnh sửa Sản Phẩm -->
 <script>
-    async function submitAddProductForm(event) {
-        event.preventDefault();
+    let isEditMode = false; // true: edit, false: add
 
-        const form = document.getElementById("addProductForm");
-        const formData = new FormData(form);
+function openAddProductModal() {
+    isEditMode = false;
+    document.getElementById("productModalTitle").textContent = "Add New Product";
+    document.getElementById("productModalSubmitBtn").textContent = "Save Product";
+    resetProductForm();
+    $('#productModal').modal('show');
+}
 
-        const data = {
-            Name: formData.get("Name").trim(),
-            Description: formData.get("Description").trim(),
-            BrandName: formData.get("BrandName"),
-            MainImage: formData.get("MainImage").trim()
-        };
+function prepareEditModal(button) {
+    isEditMode = true;
+    document.getElementById("productModalTitle").textContent = "Edit Product";
+    document.getElementById("productModalSubmitBtn").textContent = "Update Product";
 
-        // Kiểm tra dữ liệu
-        if (!data.Name || !data.Description || !data.BrandName) {
-            alert("Please fill in all required fields.");
-            return;
+    const form = document.getElementById("productForm");
+    form.elements["Id"].value = button.getAttribute("data-id");
+    form.elements["Name"].value = button.getAttribute("data-name");
+    form.elements["Description"].value = button.getAttribute("data-description");
+    form.elements["BrandName"].value = button.getAttribute("data-brandname");
+    form.elements["MainImage"].value = button.getAttribute("data-mainimage");
+
+    $('#productModal').modal('show');
+}
+
+function resetProductForm() {
+    const form = document.getElementById("productForm");
+    if (form) {
+        form.reset();
+        form.elements["Id"].value = ""; // clear Id
+        // set combo box về option đầu tiên (value="")
+        form.elements["BrandName"].value = "";
+    }
+}
+
+$('#productModal').on('hidden.bs.modal', function () {
+    resetProductForm();
+    isEditMode = false; // reset về add mode
+});
+
+async function submitProductForm(event) {
+    event.preventDefault();
+
+    const form = document.getElementById("productForm");
+    const formData = new FormData(form);
+
+    const data = {
+        Id: formData.get("Id") ? parseInt(formData.get("Id")) : 0,
+        Name: formData.get("Name").trim(),
+        Description: formData.get("Description").trim(),
+        BrandName: formData.get("BrandName"),
+        MainImage: formData.get("MainImage").trim()
+    };
+
+    if (!data.Name || !data.Description || !data.BrandName) {
+        alert("Please fill in all required fields.");
+        return;
+    }
+
+    try {
+        let url = "";
+        let method = "";
+
+        if (isEditMode && data.Id > 0) {
+            url = `/Products/Update/${data.Id}`;
+            method = "PUT";
+        } else {
+            url = `/Products/Create`;
+            method = "POST";
         }
 
-        try {
-            const response = await fetch("/Products/Create", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data)
-            });
+        const response = await fetch(url, {
+            method: method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
 
-            if (response.ok) {
-                $('#addProductModal').modal('hide');
-                resetAddProductForm();
-                alert("Product added successfully.");
-                location.reload(); // Reload trang để thấy dữ liệu mới
+        if (response.ok) {
+            $('#productModal').modal('hide');
+            resetProductForm();
+            alert(isEditMode ? "Product updated successfully." : "Product added successfully.");
+            location.reload();
+        } else {
+            const err = await response.text();
+            if (err.includes("trùng tên")) {
+                alert("Tên Product đã tồn tại. Hãy nhập tên khác");
             } else {
-                const err = await response.text();
-                alert("Failed to add product: " + err);
+                alert("Failed: " + err);
             }
-        } catch (error) {
-            alert("Error: " + error);
         }
+    } catch (error) {
+        alert("Error: " + error);
     }
-
-    function resetAddProductForm() {
-        const form = document.getElementById("addProductForm");
-        if (form) form.reset();
-    }
-
-    $('#addProductModal').on('hidden.bs.modal', function () {
-        resetAddProductForm();
-    });
+}
 </script>
-
-
-
-<!-- Modal Chỉnh sửa Sản phẩm -->
-<div class="modal fade" id="editProductModal" tabindex="-1" role="dialog" aria-labelledby="editProductModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-
-            <!-- HEADER -->
-            <div class="modal-header d-flex justify-content-between align-items-center">
-                <h5 class="modal-title font-weight-bold mb-0" style="font-size: 20px;">Edit Product</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="resetEditProductForm()">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-
-            <!-- FORM -->
-            <form id="editProductForm" onsubmit="submitEditProductForm(event)">
-                <div class="modal-body">
-                    <input type="hidden" name="Id" /> <!-- ẩn Id sản phẩm -->
-
-                    <div class="form-group">
-                        <label>Product Name</label>
-                        <input type="text" name="Name" class="form-control" required />
-                    </div>
-
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea name="Description" class="form-control" required></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Brand</label>
-                        <select name="BrandName" class="form-control" required>
-                            <option value="" disabled>Select Brand</option>
-                            @foreach (var item in ViewBag.Brands as List<SelectListItem>)
-                            {
-                                if (item.Value != "0")
-                                {
-                                    <option value="@item.Text">@item.Text</option>
-                                }
-                            }
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Main Image URL</label>
-                        <input type="text" name="MainImage" class="form-control" />
-                    </div>
-                </div>
-
-                <!-- FOOTER -->
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="resetEditProductForm()">Close</button>
-                    <button type="submit" class="btn btn-primary">Update Product</button>
-                </div>
-            </form>
-
-        </div>
-    </div>
-</div>
-
-
-<!-- Logic Chỉnh sửa Sản Phẩm -->
-<script>
-            function prepareEditModal(button) {
-        const form = document.getElementById("editProductForm");
-
-        form.elements["Id"].value = button.getAttribute("data-id");
-        form.elements["Name"].value = button.getAttribute("data-name");
-        form.elements["Description"].value = button.getAttribute("data-description");
-        form.elements["BrandName"].value = button.getAttribute("data-brandname");
-        form.elements["MainImage"].value = button.getAttribute("data-mainimage");
-
-        // Hiển thị modal
-        $('#editProductModal').modal('show');
-    }
-
-    function resetEditProductForm() {
-        const form = document.getElementById("editProductForm");
-        if (form) form.reset();
-    }
-
-    $('#editProductModal').on('hidden.bs.modal', function () {
-        resetEditProductForm();
-    });
-
-     async function submitEditProductForm(event) {
-        event.preventDefault();
-
-        const form = document.getElementById("editProductForm");
-        const formData = new FormData(form);
-
-        const data = {
-            Id: parseInt(formData.get("Id")),
-            Name: formData.get("Name").trim(),
-            Description: formData.get("Description").trim(),
-            BrandName: formData.get("BrandName"),
-            MainImage: formData.get("MainImage").trim()
-        };
-
-        if (!data.Name || !data.Description || !data.BrandName) {
-            alert("Please fill in all required fields.");
-            return;
-        }
-
-        try {
-            const response = await fetch(`/Products/Update/${data.Id}`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data)
-            });
-
-            if (response.ok) {
-                $('#editProductModal').modal('hide');
-                resetEditProductForm();
-                alert("Product updated successfully.");
-                location.reload();
-            } else {
-                const err = await response.text();
-                alert("Failed to update product: " + err);
-            }
-        } catch (error) {
-            alert("Error: " + error);
-        }
-    }
-</script>
-
 
 <!-- Logic Xóa Sản Phẩm -->
 <script>

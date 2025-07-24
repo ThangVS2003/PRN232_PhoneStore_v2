@@ -20,19 +20,29 @@ namespace WebMVC.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1)
         {
             try
             {
-                var response = await _httpClient.GetAsync("colors");
+                int pageSize = 5;
+                var response = await _httpClient.GetAsync($"colors?isPaging=true&page={page}&pageSize={pageSize}");
                 if (!response.IsSuccessStatusCode)
                     return View("Error");
 
                 var content = await response.Content.ReadAsStringAsync();
-                var colors = JsonSerializer.Deserialize<List<ColorViewModel>>(content, new JsonSerializerOptions
+                var json = JsonDocument.Parse(content);
+
+                var colorsJson = json.RootElement.GetProperty("data").GetRawText();
+                var colors = JsonSerializer.Deserialize<List<ColorViewModel>>(colorsJson, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
+
+                int totalItems = json.RootElement.GetProperty("totalItems").GetInt32();
+                int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
 
                 return View("~/Views/Staff/Colors/Index.cshtml", colors);
             }
@@ -43,30 +53,40 @@ namespace WebMVC.Controllers
         }
 
         [HttpGet("Search")]
-        public async Task<IActionResult> Search(string name)
+        public async Task<IActionResult> Search(string name, int page = 1)
         {
             try
             {
+                int pageSize = 5;
                 HttpResponseMessage response;
 
                 if (string.IsNullOrWhiteSpace(name))
                 {
-                    response = await _httpClient.GetAsync("colors");
+                    // Không nhập gì, lấy tất cả (giống Index)
+                    response = await _httpClient.GetAsync($"colors?isPaging=true&page={page}&pageSize={pageSize}");
                 }
                 else
                 {
-                    response = await _httpClient.GetAsync($"colors/search?name={name}");
+                    // Có nhập, gọi search
+                    var url = $"colors/search?name={name}&page={page}&pageSize={pageSize}";
+                    response = await _httpClient.GetAsync(url);
                 }
 
                 var colors = new List<ColorViewModel>();
+                int totalItems = 0;
 
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    colors = JsonSerializer.Deserialize<List<ColorViewModel>>(content, new JsonSerializerOptions
+                    var json = JsonDocument.Parse(content);
+
+                    var colorsJson = json.RootElement.GetProperty("data").GetRawText();
+                    colors = JsonSerializer.Deserialize<List<ColorViewModel>>(colorsJson, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
                     });
+
+                    totalItems = json.RootElement.GetProperty("totalItems").GetInt32();
                 }
                 else if (response.StatusCode == HttpStatusCode.NotFound)
                 {
@@ -77,7 +97,12 @@ namespace WebMVC.Controllers
                     return View("Error");
                 }
 
+                int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
                 ViewBag.SelectedName = name;
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
+                ViewBag.IsSearch = true;
 
                 return View("~/Views/Staff/Colors/Index.cshtml", colors);
             }

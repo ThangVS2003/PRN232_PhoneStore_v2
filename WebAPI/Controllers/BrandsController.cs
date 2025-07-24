@@ -19,11 +19,30 @@ namespace PhoneStoreAPI.Controllers
             _brandService = brandService;
         }
 
+        // GET: api/brands?isPaging=true&page=1&pageSize=10
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] bool isPaging = false, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var brands = await _brandService.GetAllAsync();
-            return Ok(brands);
+
+            if (!isPaging)
+            {
+                return Ok(brands);
+            }
+
+            int totalItems = brands.Count;
+            var pagedBrands = brands
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return Ok(new
+            {
+                Data = pagedBrands,
+                TotalItems = totalItems,
+                Page = page,
+                PageSize = pageSize
+            });
         }
 
         [HttpGet("{id}")]
@@ -36,13 +55,24 @@ namespace PhoneStoreAPI.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<IActionResult> Search([FromQuery] string name)
+        public async Task<IActionResult> Search([FromQuery] string name, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var brands = await _brandService.SearchAsync(name);
-            return Ok(brands);
+
+            int totalItems = brands.Count;
+            var pagedBrands = brands
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return Ok(new
+            {
+                Data = pagedBrands,
+                TotalItems = totalItems,
+                Page = page,
+                PageSize = pageSize
+            });
         }
-
-
 
 
 

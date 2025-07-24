@@ -20,19 +20,29 @@ namespace WebMVC.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1)
         {
             try
             {
-                var response = await _httpClient.GetAsync("versions");
+                int pageSize = 5;
+                var response = await _httpClient.GetAsync($"versions?isPaging=true&page={page}&pageSize={pageSize}");
                 if (!response.IsSuccessStatusCode)
                     return View("Error");
 
                 var content = await response.Content.ReadAsStringAsync();
-                var versions = JsonSerializer.Deserialize<List<VersionViewModel>>(content, new JsonSerializerOptions
+                var json = JsonDocument.Parse(content);
+
+                var versionsJson = json.RootElement.GetProperty("data").GetRawText();
+                var versions = JsonSerializer.Deserialize<List<VersionViewModel>>(versionsJson, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
+
+                int totalItems = json.RootElement.GetProperty("totalItems").GetInt32();
+                int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
 
                 return View("~/Views/Staff/Versions/Index.cshtml", versions);
             }
@@ -43,30 +53,37 @@ namespace WebMVC.Controllers
         }
 
         [HttpGet("Search")]
-        public async Task<IActionResult> Search(string name)
+        public async Task<IActionResult> Search(string name, int page = 1)
         {
             try
             {
+                int pageSize = 5;
                 HttpResponseMessage response;
 
                 if (string.IsNullOrWhiteSpace(name))
                 {
-                    response = await _httpClient.GetAsync("versions");
+                    response = await _httpClient.GetAsync($"versions?isPaging=true&page={page}&pageSize={pageSize}");
                 }
                 else
                 {
-                    response = await _httpClient.GetAsync($"versions/search?name={name}");
+                    response = await _httpClient.GetAsync($"versions/search?name={name}&page={page}&pageSize={pageSize}");
                 }
 
                 var versions = new List<VersionViewModel>();
+                int totalItems = 0;
 
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    versions = JsonSerializer.Deserialize<List<VersionViewModel>>(content, new JsonSerializerOptions
+                    var json = JsonDocument.Parse(content);
+
+                    var versionsJson = json.RootElement.GetProperty("data").GetRawText();
+                    versions = JsonSerializer.Deserialize<List<VersionViewModel>>(versionsJson, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
                     });
+
+                    totalItems = json.RootElement.GetProperty("totalItems").GetInt32();
                 }
                 else if (response.StatusCode == HttpStatusCode.NotFound)
                 {
@@ -77,7 +94,12 @@ namespace WebMVC.Controllers
                     return View("Error");
                 }
 
+                int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
                 ViewBag.SelectedName = name;
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
+                ViewBag.IsSearch = true;
 
                 return View("~/Views/Staff/Versions/Index.cshtml", versions);
             }

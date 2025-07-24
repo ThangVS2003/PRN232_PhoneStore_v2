@@ -22,54 +22,71 @@ namespace WebMVC.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1)
         {
             try
             {
-                var response = await _httpClient.GetAsync("vouchers");
+                int pageSize = 5;
+                var response = await _httpClient.GetAsync($"vouchers?isPaging=true&page={page}&pageSize={pageSize}");
                 if (!response.IsSuccessStatusCode)
                     return View("Error");
 
                 var content = await response.Content.ReadAsStringAsync();
-                var products = JsonSerializer.Deserialize<List<VoucherViewModel>>(content, new JsonSerializerOptions
+                var json = JsonDocument.Parse(content);
+
+                var vouchersJson = json.RootElement.GetProperty("data").GetRawText();
+                var vouchers = JsonSerializer.Deserialize<List<VoucherViewModel>>(vouchersJson, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
 
-                return View("~/Views/Staff/Vouchers/Index.cshtml", products);
+                int totalItems = json.RootElement.GetProperty("totalItems").GetInt32();
+                int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
+
+                return View("~/Views/Staff/Vouchers/Index.cshtml", vouchers);
             }
-            catch (Exception ex)
+            catch
             {
                 return View("Error");
             }
         }
 
         [HttpGet("Search")]
-        public async Task<IActionResult> Search(string code)
+        public async Task<IActionResult> Search(string code, int page = 1)
         {
             try
             {
+                int pageSize = 5;
                 HttpResponseMessage response;
 
                 if (string.IsNullOrWhiteSpace(code))
                 {
-                    // Nếu không nhập code, gọi lại API lấy tất cả
-                    response = await _httpClient.GetAsync("vouchers");
+                    // Lấy tất cả với phân trang
+                    response = await _httpClient.GetAsync($"vouchers?isPaging=true&page={page}&pageSize={pageSize}");
                 }
                 else
                 {
-                    response = await _httpClient.GetAsync($"vouchers/search?code={code}");
+                    response = await _httpClient.GetAsync($"vouchers/search?code={code}&page={page}&pageSize={pageSize}");
                 }
 
                 var vouchers = new List<VoucherViewModel>();
+                int totalItems = 0;
 
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    vouchers = JsonSerializer.Deserialize<List<VoucherViewModel>>(content, new JsonSerializerOptions
+                    var json = JsonDocument.Parse(content);
+
+                    var vouchersJson = json.RootElement.GetProperty("data").GetRawText();
+                    vouchers = JsonSerializer.Deserialize<List<VoucherViewModel>>(vouchersJson, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
                     });
+
+                    totalItems = json.RootElement.GetProperty("totalItems").GetInt32();
                 }
                 else if (response.StatusCode == HttpStatusCode.NotFound)
                 {
@@ -77,16 +94,21 @@ namespace WebMVC.Controllers
                 }
                 else
                 {
-                    return View("Error", new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+                    return View("Error");
                 }
 
+                int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
                 ViewBag.SelectedCode = code;
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
+                ViewBag.IsSearch = true;
 
                 return View("~/Views/Staff/Vouchers/Index.cshtml", vouchers);
             }
             catch
             {
-                return View("Error", new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+                return View("Error");
             }
         }
 

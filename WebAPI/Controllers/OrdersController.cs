@@ -16,11 +16,59 @@ namespace PhoneStoreAPI.Controllers
             _orderService = orderService;
         }
 
+        // GET: api/orders?page=1&pageSize=10
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get(
+            [FromQuery] bool isPaging = false,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
         {
             var orders = await _orderService.GetAllAsync();
-            return Ok(orders);
+
+            if (!isPaging)
+            {
+                // Trả về tất cả đơn hàng không phân trang
+                var allOrders = orders.Select(o => new OrderDto
+                {
+                    Id = o.Id,
+                    UserId = o.UserId,
+                    Name = o.User != null ? o.User.Name : "Không rõ",
+                    OrderDate = o.OrderDate,
+                    TotalAmount = o.TotalAmount,
+                    Status = o.Status,
+                    ShippingAddress = o.ShippingAddress,
+                    VoucherId = o.VoucherId,
+                    VoucherCode = o.Voucher != null ? o.Voucher.Code : "Không có",
+                }).ToList();
+
+                return Ok(allOrders);
+            }
+
+            // Trả về có phân trang
+            int totalItems = orders.Count;
+            var pagedOrders = orders
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(o => new OrderDto
+                {
+                    Id = o.Id,
+                    UserId = o.UserId,
+                    Name = o.User != null ? o.User.Name : "Không rõ",
+                    OrderDate = o.OrderDate,
+                    TotalAmount = o.TotalAmount,
+                    Status = o.Status,
+                    ShippingAddress = o.ShippingAddress,
+                    VoucherId = o.VoucherId,
+                    VoucherCode = o.Voucher != null ? o.Voucher.Code : "Không có",
+                }).ToList();
+
+            return Ok(new
+            {
+                Data = pagedOrders,
+                TotalItems = totalItems,
+                Page = page,
+                PageSize = pageSize
+            });
         }
 
         [HttpGet("{id}")]
@@ -30,7 +78,34 @@ namespace PhoneStoreAPI.Controllers
             if (order == null)
                 return NotFound("Order not found");
 
-            return Ok(order);
+            var orderDto = new OrderDto
+            {
+                Id = order.Id,
+                UserId = order.UserId,
+                Name = order.User != null ? order.User.Name : "Không rõ",
+                OrderDate = order.OrderDate,
+                TotalAmount = order.TotalAmount,
+                Status = order.Status,
+                ShippingAddress = order.ShippingAddress,
+                VoucherId = order.VoucherId,
+                VoucherCode = order.Voucher != null ? order.Voucher.Code : "Không có",
+                Items = order.OrderDetails.Select(od => new OrderItemDto
+                {
+                    Id = od.Id,
+                    ProductVariantId = od.ProductVariantId,
+                    Image =od.ProductVariant.Image,
+                    ProductId = od.ProductVariant.ProductId,
+                    ProductName = od.ProductVariant.Product != null ? od.ProductVariant.Product.Name : "Không rõ",
+                    ColorId = od.ProductVariant.ColorId,
+                    ColorName = od.ProductVariant.Color != null ? od.ProductVariant.Color.Name : null,
+                    VersionId = od.ProductVariant.VersionId,
+                    VersionName = od.ProductVariant.Version != null ? od.ProductVariant.Version.Name : null,
+                    Quantity = od.Quantity,
+                    UnitPrice = od.UnitPrice
+                }).ToList()
+            };
+
+            return Ok(orderDto);
         }
 
         [HttpPost]

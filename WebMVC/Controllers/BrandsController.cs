@@ -20,19 +20,29 @@ public class BrandsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int page = 1)
     {
         try
         {
-            var response = await _httpClient.GetAsync("brands");
+            int pageSize = 5;
+            var response = await _httpClient.GetAsync($"brands?isPaging=true&page={page}&pageSize={pageSize}");
             if (!response.IsSuccessStatusCode)
                 return View("Error");
 
             var content = await response.Content.ReadAsStringAsync();
-            var brands = JsonSerializer.Deserialize<List<BrandViewModel>>(content, new JsonSerializerOptions
+            var json = JsonDocument.Parse(content);
+
+            var brandsJson = json.RootElement.GetProperty("data").GetRawText();
+            var brands = JsonSerializer.Deserialize<List<BrandViewModel>>(brandsJson, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
+
+            int totalItems = json.RootElement.GetProperty("totalItems").GetInt32();
+            int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
 
             return View("~/Views/Staff/Brands/Index.cshtml", brands);
         }
@@ -43,30 +53,37 @@ public class BrandsController : Controller
     }
 
     [HttpGet("Search")]
-    public async Task<IActionResult> Search(string name)
+    public async Task<IActionResult> Search(string name, int page = 1)
     {
         try
         {
+            int pageSize = 5;
             HttpResponseMessage response;
 
             if (string.IsNullOrWhiteSpace(name))
             {
-                response = await _httpClient.GetAsync("brands");
+                response = await _httpClient.GetAsync($"brands?isPaging=true&page={page}&pageSize={pageSize}");
             }
             else
             {
-                response = await _httpClient.GetAsync($"brands/search?name={name}");
+                response = await _httpClient.GetAsync($"brands/search?name={name}&page={page}&pageSize={pageSize}");
             }
 
             var brands = new List<BrandViewModel>();
+            int totalItems = 0;
 
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                brands = JsonSerializer.Deserialize<List<BrandViewModel>>(content, new JsonSerializerOptions
+                var json = JsonDocument.Parse(content);
+
+                var brandsJson = json.RootElement.GetProperty("data").GetRawText();
+                brands = JsonSerializer.Deserialize<List<BrandViewModel>>(brandsJson, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
+
+                totalItems = json.RootElement.GetProperty("totalItems").GetInt32();
             }
             else if (response.StatusCode == HttpStatusCode.NotFound)
             {
@@ -77,7 +94,12 @@ public class BrandsController : Controller
                 return View("Error");
             }
 
+            int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
             ViewBag.SelectedName = name;
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.IsSearch = true;
 
             return View("~/Views/Staff/Brands/Index.cshtml", brands);
         }

@@ -28,6 +28,11 @@ namespace Service.Service
             return await _productVariantRepository.GetByIdAsync(id);
         }
 
+        public async Task<List<ProductVariant>> SearchAsync(string productName, string color, string version)
+        {
+            return await _productVariantRepository.SearchAsync(productName, color, version);
+        }
+
         public async Task<List<ProductVariant>> GetByProductIdAsync(int productId)
         {
             return await _productVariantRepository.GetByProductIdAsync(productId);

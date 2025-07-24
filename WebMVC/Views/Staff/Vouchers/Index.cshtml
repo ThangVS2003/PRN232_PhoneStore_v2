@@ -105,6 +105,47 @@
                     }
                 </tbody>
             </table>
+            <div class="text-center">
+                <ul class="pagination">
+                    @{
+                        int currentPage = ViewBag.CurrentPage ?? 1;
+                        int totalPages = ViewBag.TotalPages ?? 1;
+                        bool isSearch = ViewBag.IsSearch ?? false;
+                        string selectedCode = ViewBag.SelectedCode as string ?? "";
+
+                        int prevPage = currentPage > 1 ? currentPage - 1 : 1;
+                        int nextPage = currentPage < totalPages ? currentPage + 1 : totalPages;
+
+                        string prevUrl = isSearch
+                        ? Url.Action("Search", "Vouchers", new { code = selectedCode, page = prevPage })
+                        : Url.Action("Index", "Vouchers", new { page = prevPage });
+
+                        string nextUrl = isSearch
+                        ? Url.Action("Search", "Vouchers", new { code = selectedCode, page = nextPage })
+                        : Url.Action("Index", "Vouchers", new { page = nextPage });
+                    }
+
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" href="@(currentPage == 1 ? "#" : prevUrl)">Prev</a>
+                    </li>
+
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        var active = (i == currentPage) ? "active" : "";
+                        string url = isSearch
+                        ? Url.Action("Search", "Vouchers", new { code = selectedCode, page = i })
+                        : Url.Action("Index", "Vouchers", new { page = i });
+
+                        <li class="page-item @active">
+                            <a class="page-link" href="@url">@i</a>
+                        </li>
+                    }
+
+                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                        <a class="page-link" href="@(currentPage == totalPages ? "#" : nextUrl)">Next</a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 </section>
