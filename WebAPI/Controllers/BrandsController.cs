@@ -19,11 +19,30 @@ namespace PhoneStoreAPI.Controllers
             _brandService = brandService;
         }
 
+        // GET: api/brands?isPaging=true&page=1&pageSize=10
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] bool isPaging = false, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var brands = await _brandService.GetAllAsync();
-            return Ok(brands);
+
+            if (!isPaging)
+            {
+                return Ok(brands);
+            }
+
+            int totalItems = brands.Count;
+            var pagedBrands = brands
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return Ok(new
+            {
+                Data = pagedBrands,
+                TotalItems = totalItems,
+                Page = page,
+                PageSize = pageSize
+            });
         }
 
         [HttpGet("{id}")]
@@ -36,13 +55,24 @@ namespace PhoneStoreAPI.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<IActionResult> Search([FromQuery] string name)
+        public async Task<IActionResult> Search([FromQuery] string name, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var brands = await _brandService.SearchAsync(name);
-            return Ok(brands);
+
+            int totalItems = brands.Count;
+            var pagedBrands = brands
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return Ok(new
+            {
+                Data = pagedBrands,
+                TotalItems = totalItems,
+                Page = page,
+                PageSize = pageSize
+            });
         }
-
-
 
 
 
@@ -52,6 +82,13 @@ namespace PhoneStoreAPI.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // Kiểm tra tên đã tồn tại hay chưa
+            var existingBrands = await _brandService.SearchAsync(dto.Name);
+            if (existingBrands.Any(b => b.Name.Trim().ToLower() == dto.Name.Trim().ToLower()))
+            {
+                return BadRequest("Tên thương hiệu đã tồn tại.");
+            }
+
             var brand = new Brand
             {
                 Name = dto.Name,
@@ -60,7 +97,7 @@ namespace PhoneStoreAPI.Controllers
 
             await _brandService.AddAsync(brand);
 
-            dto.Id = brand.Id; // Gán lại id sau khi lưu
+            dto.Id = brand.Id;
 
             return CreatedAtAction(nameof(Get), new { id = dto.Id }, dto);
         }
@@ -75,7 +112,13 @@ namespace PhoneStoreAPI.Controllers
             if (existingBrand == null)
                 return NotFound();
 
-            // Cập nhật 3 thuộc tính
+            // Kiểm tra tên đã tồn tại (trừ chính nó)
+            var existingBrands = await _brandService.SearchAsync(dto.Name);
+            if (existingBrands.Any(b => b.Name.Trim().ToLower() == dto.Name.Trim().ToLower() && b.Id != id))
+            {
+                return BadRequest("Tên thương hiệu đã tồn tại.");
+            }
+
             existingBrand.Name = dto.Name;
             existingBrand.Description = dto.Description;
 

@@ -1,0 +1,245 @@
+﻿@model List<WebMVC.Models.VersionViewModel>
+
+@{
+    ViewData["Title"] = "Version List";
+    Layout = "~/Views/Shared/_LayoutStaff.cshtml";
+}
+
+<!-- Nút Add Version -->
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2 align-items-center">
+            <div class="col-sm-6">
+                <h1>Danh sách Phiên bản</h1>
+            </div>
+            <div class="col-sm-6 text-right">
+                <button class="btn btn-success" data-toggle="modal" data-target="#addVersionModal">
+                    <i class="fas fa-plus"></i> Add Version
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="box">
+        <div class="box-header with-border">
+            <form method="get" action="/Versions/Search" class="form-inline mb-3">
+                <div class="form-group mr-2">
+                    <input type="text" name="name" value="@ViewBag.SelectedName" placeholder="Version Name..." class="form-control" />
+                </div>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+        <div class="box-body table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+                                <td>
+                                    <div style="display: flex; justify-content: center; gap: 6px;">
+                                        <a href="javascript:void(0);" class="btn btn-warning btn-sm"
+                                           data-id="@item.Id"
+                                           data-name="@item.Name"
+                                           onclick="openEditVersionModal(this)">
+                                            Edit
+                                        </a>
+
+                                        <button class="btn btn-danger btn-sm" onclick="deleteVersion(@item.Id)">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="3" class="text-center text-danger font-weight-bold">No versions available.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="text-center">
+                <ul class="pagination">
+                    @{
+                        int currentPage = ViewBag.CurrentPage ?? 1;
+                        int totalPages = ViewBag.TotalPages ?? 1;
+                        bool isSearch = ViewBag.IsSearch ?? false;
+                        string selectedName = ViewBag.SelectedName as string ?? "";
+
+                        int prevPage = currentPage > 1 ? currentPage - 1 : 1;
+                        int nextPage = currentPage < totalPages ? currentPage + 1 : totalPages;
+
+                        string prevUrl = isSearch
+                        ? Url.Action("Search", "Versions", new { name = selectedName, page = prevPage })
+                        : Url.Action("Index", "Versions", new { page = prevPage });
+
+                        string nextUrl = isSearch
+                        ? Url.Action("Search", "Versions", new { name = selectedName, page = nextPage })
+                        : Url.Action("Index", "Versions", new { page = nextPage });
+                    }
+
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" href="@(currentPage == 1 ? "#" : prevUrl)">Prev</a>
+                    </li>
+
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        var active = (i == currentPage) ? "active" : "";
+                        string url = isSearch
+                        ? Url.Action("Search", "Versions", new { name = selectedName, page = i })
+                        : Url.Action("Index", "Versions", new { page = i });
+
+                        <li class="page-item @active">
+                            <a class="page-link" href="@url">@i</a>
+                        </li>
+                    }
+
+                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                        <a class="page-link" href="@(currentPage == totalPages ? "#" : nextUrl)">Next</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal Add / Edit Version -->
+<div class="modal fade" id="addVersionModal" tabindex="-1" role="dialog" aria-labelledby="addVersionModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <!-- HEADER -->
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <h5 class="modal-title font-weight-bold mb-0">Add New Version</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="resetAddVersionForm()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!-- FORM -->
+            <form id="addVersionForm" onsubmit="submitAddVersionForm(event)">
+                <div class="modal-body">
+                    <input type="hidden" name="Id" />
+
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" name="Name" class="form-control" required />
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="resetAddVersionForm()">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Version</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    async function submitAddVersionForm(event) {
+        event.preventDefault();
+        const form = document.getElementById("addVersionForm");
+        const formData = new FormData(form);
+        const versionId = formData.get("Id");
+
+        const data = {
+            Id: parseInt(versionId) || 0,
+            Name: formData.get("Name").trim()
+        };
+
+        if (!data.Name) {
+            alert("Version name is required.");
+            return;
+        }
+
+        try {
+            const url = data.Id > 0 ? `/Versions/Update/${data.Id}` : "/Versions/Create";
+            const method = data.Id > 0 ? "PUT" : "POST";
+
+            const response = await fetch(url, {
+                method: method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                $('#addVersionModal').modal('hide');
+                resetAddVersionForm();
+                alert(data.Id > 0 ? "Version updated successfully." : "Version added successfully.");
+                location.reload();
+            } else {
+                const err = await response.text();
+                if (err.includes("trùng tên Version")) {
+                    alert("Đã trùng tên Version có sẵn");
+                } else {
+                    alert("Failed: " + err);
+                }
+            }
+        } catch (error) {
+            alert("Error: " + error);
+        }
+    }
+
+    function resetAddVersionForm() {
+        const form = document.getElementById("addVersionForm");
+        if (form) {
+            form.reset();
+            form.querySelector('input[name="Id"]').value = "";
+        }
+    }
+
+    function openEditVersionModal(button) {
+        const modal = $('#addVersionModal');
+        modal.find('.modal-title').text("Edit Version");
+
+        const form = document.getElementById("addVersionForm");
+        form.querySelector('input[name="Id"]').value = button.dataset.id;
+        form.querySelector('input[name="Name"]').value = button.dataset.name;
+
+        modal.modal('show');
+    }
+
+    $('#addVersionModal').on('hidden.bs.modal', function () {
+        resetAddVersionForm();
+        $(this).find('.modal-title').text("Add New Version");
+    });
+
+    async function deleteVersion(id) {
+        if (!confirm("Bạn có chắc chắn muốn xóa phiên bản này?")) return;
+
+        try {
+            const response = await fetch(`/Versions/Delete/${id}`, {
+                method: "DELETE"
+            });
+
+            if (response.ok) {
+                alert("Xóa phiên bản thành công.");
+                location.reload();
+            } else {
+                const error = await response.text();
+                alert("Xóa thất bại: " + error);
+            }
+        } catch (err) {
+            alert("Đã xảy ra lỗi: " + err);
+        }
+    }
+</script>
+

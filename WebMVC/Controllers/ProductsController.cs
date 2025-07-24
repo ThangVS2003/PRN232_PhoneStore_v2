@@ -21,19 +21,28 @@ namespace WebMVC.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1)
         {
             try
             {
-                var response = await _httpClient.GetAsync("products/allIncluDelete");
+                var response = await _httpClient.GetAsync($"products?includeDeleted=true&page={page}&pageSize=5");
                 if (!response.IsSuccessStatusCode)
                     return View("Error");
 
                 var content = await response.Content.ReadAsStringAsync();
-                var products = JsonSerializer.Deserialize<List<ProductDetailViewModel>>(content, new JsonSerializerOptions
+                var result = JsonDocument.Parse(content);
+
+                var productsJson = result.RootElement.GetProperty("data").GetRawText();
+                var products = JsonSerializer.Deserialize<List<ProductDetailViewModel>>(productsJson, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
+
+                var totalItems = result.RootElement.GetProperty("totalItems").GetInt32();
+                var totalPages = (int)Math.Ceiling(totalItems / 5.0);
+
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
 
                 var brandList = await GetBrandSelectList();
                 ViewBag.Brands = brandList;
@@ -47,22 +56,28 @@ namespace WebMVC.Controllers
         }
 
         [HttpGet("Search")]
-        public async Task<IActionResult> Search(string name, int brandId)
+        public async Task<IActionResult> Search(string name, int brandId, int page = 1)
         {
             try
             {
-                var url = $"products/by-name-and-brand?name={name}&brandId={brandId}";
+                var url = $"products/by-name-and-brand?name={name}&brandId={brandId}&page={page}&pageSize=5";
                 var response = await _httpClient.GetAsync(url);
 
                 List<ProductDetailViewModel> products = new List<ProductDetailViewModel>();
+                int totalItems = 0;
 
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    products = JsonSerializer.Deserialize<List<ProductDetailViewModel>>(content, new JsonSerializerOptions
+                    var result = JsonDocument.Parse(content);
+
+                    var productsJson = result.RootElement.GetProperty("data").GetRawText();
+                    products = JsonSerializer.Deserialize<List<ProductDetailViewModel>>(productsJson, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
                     });
+
+                    totalItems = result.RootElement.GetProperty("totalItems").GetInt32();
                 }
                 else if (response.StatusCode == HttpStatusCode.NotFound)
                 {
@@ -73,10 +88,15 @@ namespace WebMVC.Controllers
                     return View("Error");
                 }
 
+                var totalPages = (int)Math.Ceiling(totalItems / 5.0);
+
                 var brandList = await GetBrandSelectList();
                 ViewBag.Brands = brandList;
                 ViewBag.SelectedName = name;
                 ViewBag.SelectedBrandId = brandId;
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
+                ViewBag.IsSearch = true; // thêm flag để biết đang ở search
 
                 return View("~/Views/Staff/Products/Index.cshtml", products);
             }
@@ -203,7 +223,7 @@ namespace WebMVC.Controllers
         {
             try
             {
-                var productResponse = await _httpClient.GetAsync($"products/allIncluDelete/{id}");
+                var productResponse = await _httpClient.GetAsync($"products/{id}?includeDeleted=true");
                 if (!productResponse.IsSuccessStatusCode)
                     return NotFound();
 

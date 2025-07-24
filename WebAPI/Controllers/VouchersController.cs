@@ -16,11 +16,30 @@ namespace PhoneStoreAPI.Controllers
             _voucherService = voucherService;
         }
 
+        // GET: api/vouchers?page=1&pageSize=10&isPaging=true
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] bool isPaging = false, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var vouchers = await _voucherService.GetAllAsync();
-            return Ok(vouchers);
+
+            if (!isPaging)
+            {
+                return Ok(vouchers);
+            }
+
+            int totalItems = vouchers.Count;
+            var pagedVouchers = vouchers
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return Ok(new
+            {
+                Data = pagedVouchers,
+                TotalItems = totalItems,
+                Page = page,
+                PageSize = pageSize
+            });
         }
 
         [HttpGet("{id}")]
@@ -34,10 +53,23 @@ namespace PhoneStoreAPI.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<IActionResult> Search([FromQuery] string code)
+        public async Task<IActionResult> Search([FromQuery] string code, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var vouchers = await _voucherService.SearchAsync(code);
-            return Ok(vouchers);
+
+            int totalItems = vouchers.Count;
+            var pagedVouchers = vouchers
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return Ok(new
+            {
+                Data = pagedVouchers,
+                TotalItems = totalItems,
+                Page = page,
+                PageSize = pageSize
+            });
         }
 
         [HttpPost]

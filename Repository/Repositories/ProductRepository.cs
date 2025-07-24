@@ -15,32 +15,40 @@ namespace Repository.Repository
             _context = context;
         }
 
-        public async Task<List<Product>> GetAllAsync()
+        public async Task<List<Product>> GetAllAsync(bool includeDeleted = false)
         {
-            var products = await _context.Products
-                .Where(p => p.IsDeleted == false)
+            var query = _context.Products
                 .Include(p => p.Brand)
-                .ToListAsync();
-            Console.WriteLine($"GetAllAsync: Found {products.Count} products");
+                .AsQueryable();
+
+            if (!includeDeleted)
+                query = query.Where(p => p.IsDeleted == false);
+
+            var products = await query.ToListAsync();
+            Console.WriteLine($"GetAllAsync (includeDeleted={includeDeleted}): Found {products.Count} products");
             return products;
         }
 
-        public async Task<Product> GetByIdAsync(int id)
+        public async Task<Product> GetByIdAsync(int id, bool includeDeleted = false)
         {
-            var product = await _context.Products
+            var query = _context.Products
                 .Include(p => p.ProductVariants)
                     .ThenInclude(pv => pv.Color)
                 .Include(p => p.ProductVariants)
                     .ThenInclude(pv => pv.Version)
-                    .Include(p=>p.FeedbackProducts)
-                .ThenInclude(f => f.User)
-                .FirstOrDefaultAsync(p => p.Id == id && p.IsDeleted == false);
+                .Include(p => p.ProductVariants)
+                    .ThenInclude(pv => pv.OrderDetails)
+                .Include(p => p.FeedbackProducts)
+                    .ThenInclude(f => f.User)
+                .AsQueryable();
 
-            Console.WriteLine($"GetByIdAsync: ProductId {id} {(product != null ? "found" : "not found")}");
+            if (!includeDeleted)
+                query = query.Where(p => p.IsDeleted == false);
+
+            var product = await query.FirstOrDefaultAsync(p => p.Id == id);
+            Console.WriteLine($"GetByIdAsync (id={id}, includeDeleted={includeDeleted}): {(product != null ? "found" : "not found")}");
             return product;
         }
-
-
 
         public async Task<List<Product>> SearchAsync(string? name, int? brandId, decimal? minPrice, decimal? maxPrice)
         {
@@ -162,7 +170,10 @@ namespace Repository.Repository
                 .Where(p => p.IsDeleted == false || p.IsDeleted == true);
 
             if (!string.IsNullOrWhiteSpace(name))
+            {
+                name = name.Trim();
                 query = query.Where(p => p.Name.Contains(name));
+            }
 
             if (brandId != 0)
                 query = query.Where(p => p.BrandId == brandId);
@@ -172,28 +183,17 @@ namespace Repository.Repository
                 .ToListAsync();
         }
 
-        public async Task<List<Product>> GetAllIncludeDeletedAsync()
+        public async Task<List<Product>> SearchByNameAsync(string keyword)
         {
-            var products = await _context.Products
-                .Include(p => p.Brand)
-                .ToListAsync();
-            Console.WriteLine($"GetAllIncludeDeletedAsync: Found {products.Count} products (including deleted)");
-            return products;
-        }
+            var query = _context.Products.AsQueryable();
 
-        public async Task<Product> GetByIdIncludeDeletedAsync(int id)
-        {
-            var product = await _context.Products
-                .Include(p => p.ProductVariants)
-                    .ThenInclude(pv => pv.Color)
-                .Include(p => p.ProductVariants)
-                    .ThenInclude(pv => pv.Version)
-                .Include(p => p.FeedbackProducts)
-                    .ThenInclude(f => f.User)
-                .FirstOrDefaultAsync(p => p.Id == id); // không lọc IsDeleted
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                keyword = keyword.Trim();
+                query = query.Where(p => p.Name.Contains(keyword));
+            }
 
-            Console.WriteLine($"GetByIdIncludeDeletedAsync: ProductId {id} {(product != null ? "found" : "not found")} (including deleted)");
-            return product;
+            return await query.ToListAsync();
         }
     }
 }

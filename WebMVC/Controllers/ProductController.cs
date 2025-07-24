@@ -22,7 +22,7 @@ using WebMVC.Models;
         public async Task<IActionResult>
             Index()
         {
-            var response = await _httpClient.GetAsync("products/all");
+            var response = await _httpClient.GetAsync("products");
             if (!response.IsSuccessStatusCode)
                 return View("Error");
 
@@ -37,7 +37,7 @@ using WebMVC.Models;
 
         public async Task<IActionResult> Details(int id)
         {
-            var response = await _httpClient.GetAsync($"products/all/{id}");
+            var response = await _httpClient.GetAsync($"products/{id}");
             if (!response.IsSuccessStatusCode)
                 return NotFound();
 

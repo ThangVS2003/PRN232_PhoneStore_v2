@@ -16,11 +16,32 @@ namespace PhoneStoreAPI.Controllers
             _colorService = colorService;
         }
 
+        // GET: api/colors?page=1&pageSize=10
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] bool isPaging = false, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var colors = await _colorService.GetAllAsync();
-            return Ok(colors);
+
+            if (!isPaging)
+            {
+                // Trả về tất cả màu
+                return Ok(colors.Select(c => new { c.Id, c.Name }));
+            }
+
+            // Trả về có phân trang
+            int totalItems = colors.Count;
+            var pagedColors = colors
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return Ok(new
+            {
+                Data = pagedColors.Select(c => new { c.Id, c.Name }),
+                TotalItems = totalItems,
+                Page = page,
+                PageSize = pageSize
+            });
         }
 
         [HttpGet("{id}")]
@@ -33,10 +54,23 @@ namespace PhoneStoreAPI.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<IActionResult> Search([FromQuery] string name)
+        public async Task<IActionResult> Search([FromQuery] string name, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var colors = await _colorService.SearchAsync(name);
-            return Ok(colors);
+
+            int totalItems = colors.Count;
+            var pagedColors = colors
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return Ok(new
+            {
+                Data = pagedColors.Select(c => new { c.Id, c.Name }),
+                TotalItems = totalItems,
+                Page = page,
+                PageSize = pageSize
+            });
         }
 
         [HttpPost]

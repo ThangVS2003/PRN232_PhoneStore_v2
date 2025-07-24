@@ -16,6 +16,7 @@
     public class ProductVariantViewModel
     {
         public int? Id { get; set; }
+        public string ProductName { get; set; }
         public string Color { get; set; }
         public string Version { get; set; }
         public decimal SellingPrice { get; set; }
@@ -40,6 +41,7 @@
     {
         public int Id { get; set; }
         public string Name { get; set; }
+        public string? Description { get; set; }
     }
 
     public class ProductCreateViewModel
@@ -101,5 +103,40 @@
         public bool? IsActive { get; set; }
         public string? ApplyType { get; set; }
         public string? Description { get; set; }
+    }
+
+    public class OrderViewModel
+    {
+        public int Id { get; set; }
+        public int UserId { get; set; }
+        public string Name { get; set; } = null!;      // tên của User
+        public DateTime? OrderDate { get; set; }
+        public decimal? TotalAmount { get; set; }
+        public string? Status { get; set; }
+        public string? ShippingAddress { get; set; }
+        public string? VoucherCode { get; set; }   // Code của Voucher
+
+        public List<OrderDetailItemViewModel> Items { get; set; } = new List<OrderDetailItemViewModel>();
+        public List<OrderFeedbackViewModel> Feedbacks { get; set; } = new List<OrderFeedbackViewModel>();
+    }
+
+    public class OrderDetailItemViewModel
+    {
+        public int ProductId { get; set; }                       // Id của OrderDetail
+        public string ProductName { get; set; }           // Tên Product
+        public string? Image { get; set; }
+        public string? ColorName { get; set; }            // Tên Color
+        public string? VersionName { get; set; }          // Tên Version
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+    }
+
+    public class OrderFeedbackViewModel
+    {
+        public int Id { get; set; }
+        public string Comment { get; set; }
+        public int Rating { get; set; }
+        public DateTime? CreatedAt { get; set; }
+        public string UserName { get; set; }
     }
 }

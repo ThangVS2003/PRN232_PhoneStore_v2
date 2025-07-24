@@ -1,0 +1,254 @@
+﻿@model List<WebMVC.Models.BrandViewModel>
+
+@{
+    ViewData["Title"] = "Brand List";
+    Layout = "~/Views/Shared/_LayoutStaff.cshtml";
+}
+
+<!-- Nút Add Brand -->
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2 align-items-center">
+            <div class="col-sm-6">
+                <h1>Danh sách Thương hiệu</h1>
+            </div>
+            <div class="col-sm-6 text-right">
+                <button class="btn btn-success" data-toggle="modal" data-target="#addBrandModal">
+                    <i class="fas fa-plus"></i> Add Brand
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="box">
+        <div class="box-header with-border">
+            <form method="get" action="/Brands/Search" class="form-inline mb-3">
+                <div class="form-group mr-2">
+                    <input type="text" name="name" value="@ViewBag.SelectedName" placeholder="Brand Name..." class="form-control" />
+                </div>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+        <div class="box-body table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+                                <td>@item.Description</td>
+                                <td>
+                                    <div style="display: flex; justify-content: center; gap: 6px;">
+                                        <a href="javascript:void(0);" class="btn btn-warning btn-sm"
+                                           data-id="@item.Id"
+                                           data-name="@item.Name"
+                                           data-description="@item.Description"
+                                           onclick="openEditBrandModal(this)">
+                                            Edit
+                                        </a>
+
+                                        <button class="btn btn-danger btn-sm" onclick="deleteBrand(@item.Id)">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-danger font-weight-bold">No brands available.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="text-center">
+                <ul class="pagination">
+                    @{
+                        int currentPage = ViewBag.CurrentPage ?? 1;
+                        int totalPages = ViewBag.TotalPages ?? 1;
+                        bool isSearch = ViewBag.IsSearch ?? false;
+                        string selectedName = ViewBag.SelectedName as string ?? "";
+
+                        int prevPage = currentPage > 1 ? currentPage - 1 : 1;
+                        int nextPage = currentPage < totalPages ? currentPage + 1 : totalPages;
+
+                        string prevUrl = isSearch
+                        ? Url.Action("Search", "Brands", new { name = selectedName, page = prevPage })
+                        : Url.Action("Index", "Brands", new { page = prevPage });
+
+                        string nextUrl = isSearch
+                        ? Url.Action("Search", "Brands", new { name = selectedName, page = nextPage })
+                        : Url.Action("Index", "Brands", new { page = nextPage });
+                    }
+
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" href="@(currentPage == 1 ? "#" : prevUrl)">Prev</a>
+                    </li>
+
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        var active = (i == currentPage) ? "active" : "";
+                        string url = isSearch
+                        ? Url.Action("Search", "Brands", new { name = selectedName, page = i })
+                        : Url.Action("Index", "Brands", new { page = i });
+
+                        <li class="page-item @active">
+                            <a class="page-link" href="@url">@i</a>
+                        </li>
+                    }
+
+                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                        <a class="page-link" href="@(currentPage == totalPages ? "#" : nextUrl)">Next</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal Thêm / Sửa Brand -->
+<div class="modal fade" id="addBrandModal" tabindex="-1" role="dialog" aria-labelledby="addBrandModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <!-- HEADER -->
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <h5 class="modal-title font-weight-bold mb-0">Add New Brand</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="resetAddBrandForm()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!-- FORM -->
+            <form id="addBrandForm" onsubmit="submitAddBrandForm(event)">
+                <div class="modal-body">
+                    <input type="hidden" name="Id" />
+
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" name="Name" class="form-control" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" name="Description" class="form-control" />
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="resetAddBrandForm()">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Brand</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    async function submitAddBrandForm(event) {
+        event.preventDefault();
+        const form = document.getElementById("addBrandForm");
+        const formData = new FormData(form);
+        const brandId = formData.get("Id");
+
+        const data = {
+            Id: parseInt(brandId) || 0,
+            Name: formData.get("Name").trim(),
+            Description: formData.get("Description").trim()
+        };
+
+        if (!data.Name) {
+            alert("Brand name is required.");
+            return;
+        }
+
+        try {
+            const url = data.Id > 0 ? `/Brands/Update/${data.Id}` : "/Brands/Create";
+            const method = data.Id > 0 ? "PUT" : "POST";
+
+            const response = await fetch(url, {
+                method: method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                $('#addBrandModal').modal('hide');
+                resetAddBrandForm();
+                alert(data.Id > 0 ? "Brand updated successfully." : "Brand added successfully.");
+                location.reload();
+            } else {
+                const err = await response.text();
+                if (err.includes("đã tồn tại")) {
+                    alert("Tên thương hiệu đã tồn tại.");
+                } else {
+                    alert("Failed: " + err);
+                }
+            }
+        } catch (error) {
+            alert("Error: " + error);
+        }
+    }
+
+    function resetAddBrandForm() {
+        const form = document.getElementById("addBrandForm");
+        if (form) {
+            form.reset();
+            form.querySelector('input[name="Id"]').value = "";
+        }
+    }
+
+    function openEditBrandModal(button) {
+        const modal = $('#addBrandModal');
+        modal.find('.modal-title').text("Edit Brand");
+
+        const form = document.getElementById("addBrandForm");
+        form.querySelector('input[name="Id"]').value = button.dataset.id;
+        form.querySelector('input[name="Name"]').value = button.dataset.name;
+        form.querySelector('input[name="Description"]').value = button.dataset.description || '';
+
+        modal.modal('show');
+    }
+
+    $('#addBrandModal').on('hidden.bs.modal', function () {
+        resetAddBrandForm();
+        $(this).find('.modal-title').text("Add New Brand");
+    });
+
+    async function deleteBrand(id) {
+        if (!confirm("Bạn có chắc chắn muốn xóa thương hiệu này?")) return;
+
+        try {
+            const response = await fetch(`/Brands/Delete/${id}`, {
+                method: "DELETE"
+            });
+
+            if (response.ok) {
+                alert("Xóa thương hiệu thành công.");
+                location.reload();
+            } else {
+                const error = await response.text();
+                alert("Xóa thất bại: " + error);
+            }
+        } catch (err) {
+            alert("Đã xảy ra lỗi: " + err);
+        }
+    }
+</script>

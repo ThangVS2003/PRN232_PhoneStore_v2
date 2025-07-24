@@ -6,8 +6,8 @@ namespace Repository.IRepository
 {
     public interface IProductRepository
     {
-        Task<List<Product>> GetAllAsync();
-        Task<Product> GetByIdAsync(int id);
+        Task<List<Product>> GetAllAsync(bool includeDeleted = false);
+        Task<Product> GetByIdAsync(int id, bool includeDeleted = false);
         Task<List<Product>> SearchAsync(string? name, int? brandId, decimal? minPrice, decimal? maxPrice);
         Task<List<Product>> GetByBrandIdAsync(int brandId);
         Task<List<Product>> GetByColorNameAsync(string colorName);
@@ -23,8 +23,6 @@ namespace Repository.IRepository
         Task DeleteAsync(int id);
         Task RestoreAsync(int id);
         Task<List<Product>> GetByNameAndBrandIdAsync(string name, int brandId);
-
-        Task<List<Product>> GetAllIncludeDeletedAsync();
-        Task<Product> GetByIdIncludeDeletedAsync(int id);
+        Task<List<Product>> SearchByNameAsync(string keyword);
     }
 }
