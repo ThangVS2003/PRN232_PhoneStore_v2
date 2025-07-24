@@ -161,11 +161,11 @@ namespace Service.Service
             var voucher = cart.VoucherId.HasValue ? await _voucherRepository.GetByIdAsync(cart.VoucherId.Value) : null;
             if (voucher != null && voucher.IsActive == true && voucher.ExpiryDate >= DateTime.Now)
             {
-                if (voucher.DiscountType == "Percentage")
+                if (voucher.DiscountType == "Percent")
                 {
                     total -= total * (voucher.DiscountValue / 100);
                 }
-                else if (voucher.DiscountType == "Fixed")
+                else if (voucher.DiscountType == "Amount")
                 {
                     total -= voucher.DiscountValue;
                 }
