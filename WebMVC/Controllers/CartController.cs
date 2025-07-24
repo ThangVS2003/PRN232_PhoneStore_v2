@@ -164,7 +164,7 @@ namespace WebMVC.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ApplyVoucher(string voucherCode)
+        public async Task<IActionResult> ApplyVoucher([FromBody] ApplyVoucherRequestDto request)
         {
             try
             {
@@ -176,12 +176,29 @@ namespace WebMVC.Controllers
                     return Json(new { success = false, message = "Vui lòng đăng nhập để áp dụng voucher.", redirectToLogin = true });
                 }
 
+                if (string.IsNullOrEmpty(request?.voucherCode))
+                {
+                    _logger.LogWarning("Mã voucher không hợp lệ: {VoucherCode}", request?.voucherCode);
+                    return Json(new { success = false, message = "Vui lòng nhập mã voucher." });
+                }
+
                 _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-                var response = await _httpClient.PostAsJsonAsync("api/Cart/apply-voucher", new { voucherCode });
-                response.EnsureSuccessStatusCode();
-                var result = await response.Content.ReadFromJsonAsync<ApplyVoucherResponse>();
-                _logger.LogInformation("Áp dụng voucher {VoucherCode} thành công. Tổng mới: {Total}", voucherCode, result.total);
-                return Json(new { success = true, total = result.total });
+                var requestBody = new { VoucherCode = request.voucherCode }; // Đảm bảo gửi VoucherCode với chữ V hoa
+                var response = await _httpClient.PostAsJsonAsync("api/Cart/apply-voucher", requestBody);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApplyVoucherResponse>();
+                    _logger.LogInformation("Áp dụng voucher {VoucherCode} thành công. Tổng mới: {Total}", request.voucherCode, result.total);
+                    return Json(new { success = true, total = result.total });
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    _logger.LogWarning("Lỗi khi áp dụng voucher {VoucherCode}. Mã trạng thái: {StatusCode}, Nội dung lỗi: {ErrorContent}", request.voucherCode, response.StatusCode, errorContent);
+                    var errorMessage = string.IsNullOrEmpty(errorContent) ? "Không thể áp dụng voucher." : errorContent;
+                    return Json(new { success = false, message = errorMessage });
+                }
             }
             catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
             {
@@ -190,11 +207,60 @@ namespace WebMVC.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi áp dụng voucher {VoucherCode}", voucherCode);
+                _logger.LogError(ex, "Lỗi khi áp dụng voucher {VoucherCode}", request?.voucherCode);
                 return Json(new { success = false, message = $"Không thể áp dụng voucher: {ex.Message}" });
             }
         }
+        public class ApplyVoucherRequestDto
+        {
+            public string voucherCode { get; set; }
+        }
+        [HttpPost]
+        public async Task<IActionResult> RemoveVoucher()
+        {
+            try
+            {
+                var token = HttpContext.Request.Cookies["JwtToken"];
+                _logger.LogInformation("JwtToken from cookie for RemoveVoucher: {Token}", token ?? "null");
+                if (string.IsNullOrEmpty(token))
+                {
+                    _logger.LogWarning("Không tìm thấy token JWT khi xóa voucher.");
+                    return Json(new { success = false, message = "Vui lòng đăng nhập để xóa voucher.", redirectToLogin = true });
+                }
 
+                _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                var response = await _httpClient.PostAsync("api/Cart/remove-voucher", null);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<RemoveVoucherResponse>();
+                    _logger.LogInformation("Xóa voucher thành công. Tổng mới: {Total}", result.total);
+                    return Json(new { success = true, total = result.total });
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    _logger.LogWarning("Lỗi khi xóa voucher. Mã trạng thái: {StatusCode}, Nội dung lỗi: {ErrorContent}", response.StatusCode, errorContent);
+                    var errorMessage = string.IsNullOrEmpty(errorContent) ? "Không thể xóa voucher." : errorContent;
+                    return Json(new { success = false, message = errorMessage });
+                }
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                _logger.LogError(ex, "Lỗi xác thực khi gọi API xóa voucher.");
+                return Json(new { success = false, message = "Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.", redirectToLogin = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi xóa voucher");
+                return Json(new { success = false, message = $"Không thể xóa voucher: {ex.Message}" });
+            }
+        }
+        public class RemoveVoucherResponse
+        {
+            public bool success { get; set; }
+            public decimal total { get; set; }
+        }
         [HttpGet]
         public async Task<IActionResult> GetCartCount()
         {

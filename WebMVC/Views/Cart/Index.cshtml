@@ -67,6 +67,10 @@
                     <div class="input-group mb-3">
                         <input type="text" id="voucher-code" class="form-control" placeholder="Nhập mã voucher" value="@(Model.VoucherCode ?? "")" />
                         <button class="btn primary-btn" id="apply-voucher">Áp dụng</button>
+                        @if (!string.IsNullOrEmpty(Model.VoucherCode) && Model.VoucherCode != "N/A")
+                        {
+                            <button class="btn btn-secondary ms-2" id="remove-voucher">Xóa voucher</button>
+                        }
                     </div>
                     @if (!string.IsNullOrEmpty(Model.VoucherCode) && Model.VoucherCode != "N/A")
                     {
@@ -168,7 +172,6 @@
                         if (response.success) {
                             jQuery('#cart-count').text(response.cartCount);
                             jQuery('#cart-total').text(formatVND(response.total));
-                           
                             jQuery(document).trigger('cartUpdated');
                             location.reload();
                         } else {
@@ -208,7 +211,8 @@
 
             // Apply voucher
             jQuery('#apply-voucher').click(function () {
-                var voucherCode = jQuery('#voucher-code').val();
+                var voucherCode = jQuery('#voucher-code').val().trim();
+                console.log('Voucher code entered:', voucherCode);
                 if (!voucherCode) {
                     Swal.fire({
                         icon: 'error',
@@ -220,21 +224,17 @@
                     return;
                 }
 
+                var requestBody = { voucherCode: voucherCode };
+                console.log('Request body:', JSON.stringify(requestBody));
                 jQuery.ajax({
                     url: '@Url.Action("ApplyVoucher", "Cart")',
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify({ voucherCode: voucherCode }),
+                    data: JSON.stringify(requestBody),
                     success: function (response) {
+                        console.log('Apply voucher response:', response);
                         if (response.success) {
                             jQuery('#cart-total').text(formatVND(response.total));
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Thành công!',
-                                text: 'Áp dụng voucher thành công.',
-                                timer: 2000,
-                                showConfirmButton: false
-                            });
                             jQuery(document).trigger('cartUpdated');
                             location.reload();
                         } else {
@@ -252,7 +252,7 @@
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'Lỗi!',
-                                    text: response.message || 'Không thể áp dụng voucher.',
+                                    text: 'Voucher không hợp lệ hoặc đã hết hạn.',
                                     timer: 2000,
                                     showConfirmButton: false
                                 });
@@ -264,7 +264,56 @@
                         Swal.fire({
                             icon: 'error',
                             title: 'Lỗi!',
-                            text: xhr.responseJSON?.message || 'Đã xảy ra lỗi khi áp dụng voucher.',
+                            text: 'Voucher không hợp lệ hoặc đã hết hạn.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                });
+            });
+
+            // Remove voucher
+            jQuery('#remove-voucher').click(function () {
+                jQuery.ajax({
+                    url: '@Url.Action("RemoveVoucher", "Cart")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({}),
+                    success: function (response) {
+                        console.log('Remove voucher response:', response);
+                        if (response.success) {
+                            jQuery('#cart-total').text(formatVND(response.total));
+                            jQuery('#voucher-code').val(''); // Xóa giá trị trong input
+                            jQuery(document).trigger('cartUpdated');
+                            location.reload();
+                        } else {
+                            if (response.redirectToLogin) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Lỗi!',
+                                    text: response.message || 'Vui lòng đăng nhập để xóa voucher.',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.href = '@Url.Action("Login", "Account")';
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Lỗi!',
+                                    text: response.message || 'Không thể xóa voucher.',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            }
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error('Remove voucher error:', xhr.responseText);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi!',
+                            text: 'Đã xảy ra lỗi khi xóa voucher.',
                             timer: 2000,
                             showConfirmButton: false
                         });
@@ -299,10 +348,10 @@
         .primary-btn {
             background-color: #ffba00;
             color: #fff;
-            padding: 12px 24px;
+            padding: 6px 12px; /* Giảm padding */
             border: none;
             border-radius: 6px;
-            font-size: 1.1em;
+            font-size: 0.9em; /* Giảm font-size */
             transition: background-color 0.3s ease;
         }
 
@@ -311,9 +360,23 @@
             }
 
         .btn-danger {
-            padding: 8px 16px;
-            font-size: 1em;
+            padding: 6px 12px; /* Giảm padding */
+            font-size: 0.9em; /* Giảm font-size */
         }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: #fff;
+            padding: 6px 12px; /* Giảm padding */
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9em; /* Giảm font-size */
+            transition: background-color 0.3s ease;
+        }
+
+            .btn-secondary:hover {
+                background-color: #5a6268;
+            }
 
         .input-group .form-control {
             border-radius: 6px 0 0 6px;

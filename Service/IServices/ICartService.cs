@@ -15,5 +15,6 @@ namespace Service.IServices
         Task RemoveCartItemAsync(int orderDetailId);
         Task ApplyVoucherAsync(int orderId, string voucherCode);
         Task<decimal> CalculateTotalAsync(int orderId);
+        Task UpdateCartAsync(Order cart);
     }
 }

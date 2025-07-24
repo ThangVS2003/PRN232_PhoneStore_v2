@@ -22,6 +22,15 @@ namespace WebMVC
                 options.Cookie.IsEssential = true;
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             });
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", builder =>
+                {
+                    builder.AllowAnyOrigin()
+                           .AllowAnyMethod()
+                           .AllowAnyHeader();
+                });
+            });
             // Cấu hình HttpClient với handler bỏ qua chứng chỉ
             builder.Services.AddHttpClient("PhoneStoreAPI", client =>
             {

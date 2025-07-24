@@ -139,7 +139,15 @@ namespace Service.Service
             cart.TotalAmount = await CalculateTotalAsync(orderId);
             await _orderRepository.UpdateAsync(cart);
         }
-
+        public async Task UpdateCartAsync(Order cart)
+        {
+            if (cart == null)
+            {
+                throw new ArgumentNullException(nameof(cart), "Giỏ hàng không được null.");
+            }
+            cart.TotalAmount = await CalculateTotalAsync(cart.Id);
+            await _orderRepository.UpdateAsync(cart);
+        }
         public async Task<decimal> CalculateTotalAsync(int orderId)
         {
             var cart = await _orderRepository.GetByIdAsync(orderId);

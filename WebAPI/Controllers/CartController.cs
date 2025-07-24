@@ -186,7 +186,39 @@ namespace PhoneStoreAPI.Controllers
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
+        [HttpPost("remove-voucher")]
+        [Authorize]
+        public async Task<IActionResult> RemoveVoucher()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                _logger.LogInformation("Nhận yêu cầu xóa voucher cho user {UserId}", userId);
+                var cart = await _cartService.GetCartByUserIdAsync(userId);
+                if (cart == null)
+                {
+                    _logger.LogWarning("Không tìm thấy giỏ hàng cho user {UserId}", userId);
+                    return BadRequest(new { success = false, message = "Không tìm thấy giỏ hàng." });
+                }
 
+                if (!cart.VoucherId.HasValue)
+                {
+                    _logger.LogWarning("Giỏ hàng của user {UserId} không có voucher để xóa", userId);
+                    return Ok(new { success = true, total = await _cartService.CalculateTotalAsync(cart.Id) });
+                }
+
+                cart.VoucherId = null;
+                await _cartService.UpdateCartAsync(cart);
+                var total = await _cartService.CalculateTotalAsync(cart.Id);
+                _logger.LogInformation("Xóa voucher thành công cho user {UserId}. Tổng mới: {Total}", userId, total);
+                return Ok(new { success = true, total });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi xóa voucher cho user");
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
         [HttpGet("count")]
         [Authorize]
         public async Task<IActionResult> GetCartCount()
