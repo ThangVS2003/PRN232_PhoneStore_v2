@@ -61,6 +61,8 @@ namespace Repository.Repository
                .Include(o => o.OrderDetails)
                .ThenInclude(od => od.ProductVariant)
                .ThenInclude(pv => pv.Version)
+               .Include(p => p.FeedbackOrders)
+                    .ThenInclude(f => f.User)
                .FirstOrDefaultAsync(o => o.Id == id);
         }
         public async Task<Order> GetByUserIdAndStatusAsync(int userId, string status)

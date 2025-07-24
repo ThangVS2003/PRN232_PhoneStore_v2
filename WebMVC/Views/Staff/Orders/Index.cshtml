@@ -1,0 +1,246 @@
+﻿@model List<WebMVC.Models.OrderViewModel>
+
+@{
+    ViewData["Title"] = "Order List";
+    Layout = "~/Views/Shared/_LayoutStaff.cshtml";
+}
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2 align-items-center">
+            <div class="col-sm-6">
+                <h1>Danh sách Đơn hàng</h1>
+            </div>
+            <div class="col-sm-6 text-right">
+                <!-- Không có nút Add -->
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="box">
+        <!-- Không có khung Search -->
+        <div class="box-body table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User Name</th>
+                        <th>Order Date</th>
+                        <th>Total Amount</th>
+                        <th>Status</th>
+                        <th>Shipping Address</th>
+                        <th>Voucher Code</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+                                <td>@(item.OrderDate?.ToString("dd/MM/yyyy HH:mm") ?? "")</td>
+                                <td>@(item.TotalAmount?.ToString("N0") ?? "0")</td>
+                                <td>@item.Status</td>
+                                <td>@item.ShippingAddress</td>
+                                <td>@(!string.IsNullOrEmpty(item.VoucherCode) ? item.VoucherCode : "Không có Voucher")</td>
+                                <td>
+                                    <div style="display: flex; justify-content: center; gap: 6px;">
+                                        <a href="@Url.Action("Details", "Orders", new { id = item.Id })" class="btn btn-info btn-sm" style="background-color: #4285F4; color: white;">Details</a>
+                                        <a href="javascript:void(0);" class="btn btn-warning btn-sm"
+                                           data-id="@item.Id"
+                                           data-name="@item.Name"
+                                           data-vouchercode="@item.VoucherCode"
+                                           data-userid="@item.UserId"
+                                           data-totalamount="@item.TotalAmount"
+                                           data-status="@item.Status"
+                                           data-shipping="@item.ShippingAddress"
+                                           onclick="prepareEditOrderModal(this)">
+                                            Edit
+                                        </a>
+
+                                        <button class="btn btn-danger btn-sm" onclick="deleteOrder(@item.Id)">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-danger font-weight-bold">No orders available.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="text-center">
+                <ul class="pagination">
+                    @{
+                        int currentPage = ViewBag.CurrentPage ?? 1;
+                        int totalPages = ViewBag.TotalPages ?? 1;
+
+                        int prevPage = currentPage > 1 ? currentPage - 1 : 1;
+                        int nextPage = currentPage < totalPages ? currentPage + 1 : totalPages;
+
+                        string prevUrl = Url.Action("Index", "Orders", new { page = prevPage });
+                        string nextUrl = Url.Action("Index", "Orders", new { page = nextPage });
+                    }
+
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" href="@(currentPage == 1 ? "#" : prevUrl)">Prev</a>
+                    </li>
+
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        var active = (i == currentPage) ? "active" : "";
+                        string url = Url.Action("Index", "Orders", new { page = i });
+
+                        <li class="page-item @active">
+                            <a class="page-link" href="@url">@i</a>
+                        </li>
+                    }
+
+                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                        <a class="page-link" href="@(currentPage == totalPages ? "#" : nextUrl)">Next</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal Edit Order -->
+<div class="modal fade" id="editOrderModal" tabindex="-1" role="dialog" aria-labelledby="editOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <!-- HEADER -->
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <h5 class="modal-title font-weight-bold mb-0">Edit Order</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="resetEditOrderForm()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!-- FORM -->
+            <form id="editOrderForm" onsubmit="submitEditOrderForm(event)">
+                <div class="modal-body">
+                    <input type="hidden" name="Id" />
+
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select name="Status" class="form-control" required>
+                            <option value="Processing">Processing</option>
+                            <option value="Delivered">Delivered</option>
+                            <option value="Shipping">Shipping</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Shipping Address</label>
+                        <input type="text" name="ShippingAddress" class="form-control" required />
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="resetEditOrderForm()">Close</button>
+                    <button type="submit" class="btn btn-primary">Update Order</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentOrderData = {}; // Lưu data cũ
+
+    function prepareEditOrderModal(button) {
+        currentOrderData = {
+            Id: parseInt(button.getAttribute("data-id")),
+            Name: button.getAttribute("data-name"),
+            VoucherCode: button.getAttribute("data-vouchercode"),
+            UserId: parseInt(button.getAttribute("data-userid")),
+            TotalAmount: parseFloat(button.getAttribute("data-totalamount")),
+            Status: button.getAttribute("data-status"),
+            ShippingAddress: button.getAttribute("data-shipping")
+        };
+
+        // Gán giá trị vào form để chỉnh sửa
+        const form = document.getElementById("editOrderForm");
+        form.elements["Id"].value = currentOrderData.Id;
+        form.elements["Status"].value = currentOrderData.Status;
+        form.elements["ShippingAddress"].value = currentOrderData.ShippingAddress;
+
+        $('#editOrderModal').modal('show');
+    }
+
+    function resetEditOrderForm() {
+        const form = document.getElementById("editOrderForm");
+        if (form) form.reset();
+    }
+
+    $('#editOrderModal').on('hidden.bs.modal', function () {
+        resetEditOrderForm();
+    });
+
+        async function submitEditOrderForm(event) {
+        event.preventDefault();
+
+        const form = document.getElementById("editOrderForm");
+        const formData = new FormData(form);
+
+        // Update status & shipping address mới
+        currentOrderData.Status = formData.get("Status");
+        currentOrderData.ShippingAddress = formData.get("ShippingAddress").trim();
+
+        try {
+            const response = await fetch(`/Orders/Update/${currentOrderData.Id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(currentOrderData)
+            });
+
+            if (response.ok) {
+                $('#editOrderModal').modal('hide');
+                alert("Order updated successfully.");
+                location.reload();
+            } else {
+                const err = await response.text();
+                alert("Failed to update order: " + err);
+            }
+        } catch (error) {
+            alert("Error: " + error);
+        }
+    }
+
+    async function deleteOrder(id) {
+        if (!confirm("Bạn có chắc muốn xóa đơn hàng này?")) return;
+
+        try {
+            const response = await fetch(`/Orders/Delete/${id}`, {
+                method: "DELETE"
+            });
+
+            if (response.ok) {
+                alert("Xóa đơn hàng thành công.");
+                location.reload();
+            } else {
+                const error = await response.text();
+                alert("Xóa đơn hàng thất bại: " + error);
+            }
+        } catch (err) {
+            alert("Đã xảy ra lỗi: " + err);
+        }
+    }
+</script>

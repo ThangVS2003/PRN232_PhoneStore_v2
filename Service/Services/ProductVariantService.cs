@@ -28,6 +28,11 @@ namespace Service.Service
             return await _productVariantRepository.GetByIdAsync(id);
         }
 
+        public async Task<List<ProductVariant>> SearchAsync(string productName, string color, string version)
+        {
+            return await _productVariantRepository.SearchAsync(productName, color, version);
+        }
+
         public async Task<List<ProductVariant>> GetByProductIdAsync(int productId)
         {
             return await _productVariantRepository.GetByProductIdAsync(productId);
@@ -41,6 +46,11 @@ namespace Service.Service
         public async Task UpdateAsync(ProductVariant productVariant)
         {
             await _productVariantRepository.UpdateAsync(productVariant);
+        }
+
+        public async Task<bool> HasOrderDetailAsync(int id)
+        {
+            return await _productVariantRepository.HasOrderDetailAsync(id);
         }
 
         public async Task DeleteAsync(int id)

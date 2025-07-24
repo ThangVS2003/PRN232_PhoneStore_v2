@@ -30,6 +30,7 @@ namespace Repository.Repository
         {
             var query = _context.Brands.AsQueryable();
             if (!string.IsNullOrEmpty(name))
+                name = name.Trim();
                 query = query.Where(b => b.Name.Contains(name));
             return await query.ToListAsync();
         }

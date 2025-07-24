@@ -1,21 +1,19 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
-using System.Text.Json;
 using System.Text;
+using System.Text.Json;
 using WebMVC.Models;
-using Microsoft.AspNetCore.Authorization;
-using System.Diagnostics;
 
 namespace WebMVC.Controllers
 {
     [Authorize(Roles = "2")]
-    [Route("Vouchers")]
-    public class VouchersController : Controller
+    [Route("Versions")]
+    public class VersionsController : Controller
     {
         private readonly HttpClient _httpClient;
 
-        public VouchersController(IHttpClientFactory httpClientFactory)
+        public VersionsController(IHttpClientFactory httpClientFactory)
         {
             _httpClient = httpClientFactory.CreateClient("PhoneStoreAPI");
             _httpClient.BaseAddress = new Uri("https://localhost:7026/api/");
@@ -27,15 +25,15 @@ namespace WebMVC.Controllers
             try
             {
                 int pageSize = 5;
-                var response = await _httpClient.GetAsync($"vouchers?isPaging=true&page={page}&pageSize={pageSize}");
+                var response = await _httpClient.GetAsync($"versions?isPaging=true&page={page}&pageSize={pageSize}");
                 if (!response.IsSuccessStatusCode)
                     return View("Error");
 
                 var content = await response.Content.ReadAsStringAsync();
                 var json = JsonDocument.Parse(content);
 
-                var vouchersJson = json.RootElement.GetProperty("data").GetRawText();
-                var vouchers = JsonSerializer.Deserialize<List<VoucherViewModel>>(vouchersJson, new JsonSerializerOptions
+                var versionsJson = json.RootElement.GetProperty("data").GetRawText();
+                var versions = JsonSerializer.Deserialize<List<VersionViewModel>>(versionsJson, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
@@ -46,7 +44,7 @@ namespace WebMVC.Controllers
                 ViewBag.CurrentPage = page;
                 ViewBag.TotalPages = totalPages;
 
-                return View("~/Views/Staff/Vouchers/Index.cshtml", vouchers);
+                return View("~/Views/Staff/Versions/Index.cshtml", versions);
             }
             catch
             {
@@ -55,24 +53,23 @@ namespace WebMVC.Controllers
         }
 
         [HttpGet("Search")]
-        public async Task<IActionResult> Search(string code, int page = 1)
+        public async Task<IActionResult> Search(string name, int page = 1)
         {
             try
             {
                 int pageSize = 5;
                 HttpResponseMessage response;
 
-                if (string.IsNullOrWhiteSpace(code))
+                if (string.IsNullOrWhiteSpace(name))
                 {
-                    // Lấy tất cả với phân trang
-                    response = await _httpClient.GetAsync($"vouchers?isPaging=true&page={page}&pageSize={pageSize}");
+                    response = await _httpClient.GetAsync($"versions?isPaging=true&page={page}&pageSize={pageSize}");
                 }
                 else
                 {
-                    response = await _httpClient.GetAsync($"vouchers/search?code={code}&page={page}&pageSize={pageSize}");
+                    response = await _httpClient.GetAsync($"versions/search?name={name}&page={page}&pageSize={pageSize}");
                 }
 
-                var vouchers = new List<VoucherViewModel>();
+                var versions = new List<VersionViewModel>();
                 int totalItems = 0;
 
                 if (response.IsSuccessStatusCode)
@@ -80,8 +77,8 @@ namespace WebMVC.Controllers
                     var content = await response.Content.ReadAsStringAsync();
                     var json = JsonDocument.Parse(content);
 
-                    var vouchersJson = json.RootElement.GetProperty("data").GetRawText();
-                    vouchers = JsonSerializer.Deserialize<List<VoucherViewModel>>(vouchersJson, new JsonSerializerOptions
+                    var versionsJson = json.RootElement.GetProperty("data").GetRawText();
+                    versions = JsonSerializer.Deserialize<List<VersionViewModel>>(versionsJson, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
                     });
@@ -90,7 +87,7 @@ namespace WebMVC.Controllers
                 }
                 else if (response.StatusCode == HttpStatusCode.NotFound)
                 {
-                    vouchers = new List<VoucherViewModel>();
+                    versions = new List<VersionViewModel>();
                 }
                 else
                 {
@@ -99,12 +96,12 @@ namespace WebMVC.Controllers
 
                 int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-                ViewBag.SelectedCode = code;
+                ViewBag.SelectedName = name;
                 ViewBag.CurrentPage = page;
                 ViewBag.TotalPages = totalPages;
                 ViewBag.IsSearch = true;
 
-                return View("~/Views/Staff/Vouchers/Index.cshtml", vouchers);
+                return View("~/Views/Staff/Versions/Index.cshtml", versions);
             }
             catch
             {
@@ -113,15 +110,14 @@ namespace WebMVC.Controllers
         }
 
         [HttpPost("Create")]
-        public async Task<IActionResult> Create([FromBody] VoucherViewModel dto)
+        public async Task<IActionResult> Create([FromBody] VersionViewModel dto)
         {
             try
             {
                 var json = JsonSerializer.Serialize(dto);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PostAsync("vouchers", content);
-
+                var response = await _httpClient.PostAsync("versions", content);
                 if (response.IsSuccessStatusCode)
                     return Ok();
 
@@ -130,12 +126,12 @@ namespace WebMVC.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest("Lỗi khi tạo voucher: " + ex.Message);
+                return BadRequest("Lỗi khi tạo version: " + ex.Message);
             }
         }
 
         [HttpPut("Update/{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] VoucherViewModel dto)
+        public async Task<IActionResult> Update(int id, [FromBody] VersionViewModel dto)
         {
             try
             {
@@ -145,8 +141,7 @@ namespace WebMVC.Controllers
                 var json = JsonSerializer.Serialize(dto);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PutAsync($"vouchers/{id}", content);
-
+                var response = await _httpClient.PutAsync($"versions/{id}", content);
                 if (response.IsSuccessStatusCode)
                     return Ok();
 
@@ -155,7 +150,7 @@ namespace WebMVC.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest("Lỗi khi cập nhật voucher: " + ex.Message);
+                return BadRequest("Lỗi khi cập nhật version: " + ex.Message);
             }
         }
 
@@ -164,8 +159,7 @@ namespace WebMVC.Controllers
         {
             try
             {
-                var response = await _httpClient.DeleteAsync($"vouchers/{id}");
-
+                var response = await _httpClient.DeleteAsync($"versions/{id}");
                 if (response.IsSuccessStatusCode)
                     return Ok();
 
@@ -174,7 +168,7 @@ namespace WebMVC.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest("Lỗi khi xóa voucher: " + ex.Message);
+                return BadRequest("Lỗi khi xóa version: " + ex.Message);
             }
         }
     }

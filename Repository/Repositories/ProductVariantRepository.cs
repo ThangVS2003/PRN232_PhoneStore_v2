@@ -37,6 +37,29 @@ namespace Repository.Repository
                 .FirstOrDefaultAsync(pv => pv.Id == id && pv.IsDeleted != true);
         }
 
+        public async Task<List<ProductVariant>> SearchAsync(string productName, string color, string version)
+        {
+            var query = _context.ProductVariants
+                .Include(v => v.Product)
+                .Include(v => v.Color)
+                .Include(v => v.Version)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(productName))
+            {
+                productName = productName.Trim();
+                query = query.Where(v => v.Product.Name.Contains(productName));
+            }
+
+            if (!string.IsNullOrEmpty(color))
+                query = query.Where(v => v.Color != null && v.Color.Name == color);
+
+            if (!string.IsNullOrEmpty(version))
+                query = query.Where(v => v.Version != null && v.Version.Name == version);
+
+            return await query.ToListAsync();
+        }
+
         public async Task<List<ProductVariant>> GetByProductIdAsync(int productId)
         {
             return await _context.Set<ProductVariant>()
@@ -59,6 +82,12 @@ namespace Repository.Repository
             productVariant.UpdatedAt = DateTime.Now;
             _context.Set<ProductVariant>().Update(productVariant);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> HasOrderDetailAsync(int productVariantId)
+        {
+            return await _context.OrderDetails
+                .AnyAsync(od => od.ProductVariantId == productVariantId);
         }
 
         public async Task DeleteAsync(int id)

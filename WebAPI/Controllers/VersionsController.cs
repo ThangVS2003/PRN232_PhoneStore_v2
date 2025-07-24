@@ -15,11 +15,30 @@ namespace PhoneStoreAPI.Controllers
             _versionService = versionService;
         }
 
+        // GET: api/versions?isPaging=true&page=1&pageSize=10
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] bool isPaging = false, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var versions = await _versionService.GetAllAsync();
-            return Ok(versions);
+
+            if (!isPaging)
+            {
+                return Ok(versions);
+            }
+
+            int totalItems = versions.Count;
+            var pagedVersions = versions
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return Ok(new
+            {
+                Data = pagedVersions,
+                TotalItems = totalItems,
+                Page = page,
+                PageSize = pageSize
+            });
         }
 
         [HttpGet("{id}")]
@@ -32,10 +51,23 @@ namespace PhoneStoreAPI.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<IActionResult> Search([FromQuery] string name)
+        public async Task<IActionResult> Search([FromQuery] string name, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var versions = await _versionService.SearchAsync(name);
-            return Ok(versions);
+
+            int totalItems = versions.Count;
+            var pagedVersions = versions
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return Ok(new
+            {
+                Data = pagedVersions,
+                TotalItems = totalItems,
+                Page = page,
+                PageSize = pageSize
+            });
         }
 
         [HttpPost]

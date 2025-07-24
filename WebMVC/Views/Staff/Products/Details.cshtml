@@ -27,7 +27,7 @@
         <div class="card-header">
             <h3 class="card-title">Danh sách các biến thể</h3>
             <div class="text-right">
-                <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#addVariantModal">Add Variant</button>
+                <button class="btn btn-success btn-sm" onclick="openAddVariantModal()">Add Variant</button>
             </div>
         </div>
         <div class="card-body">
@@ -331,6 +331,11 @@
     $('#addVariantModal').on('hidden.bs.modal', function () {
         resetAddVariantForm();
     });
+
+    function openAddVariantModal() {
+        resetAddVariantForm(); // reset form + title + data-editing
+        $('#addVariantModal').modal('show');
+    }
 </script>
 
 <script>
@@ -372,7 +377,11 @@
                 location.reload();
             } else {
                 const error = await response.text();
-                alert("Xóa biến thể thất bại: " + error);
+                if (error.includes("đã tồn tại trong")) {
+                    alert("Không thể xóa biến thể này vì đã tồn tại trong đơn hàng.");
+                } else {
+                    alert("Xóa biến thể thất bại: " + error);
+                }
             }
         } catch (err) {
             alert("Đã xảy ra lỗi: " + err);

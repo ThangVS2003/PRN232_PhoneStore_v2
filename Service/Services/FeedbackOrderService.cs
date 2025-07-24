@@ -1,5 +1,6 @@
 ﻿using BusinessObject.Models;
 using Repository.IRepository;
+using Repository.Repository;
 using Service.IService;
 using System;
 using System.Collections.Generic;
@@ -41,6 +42,11 @@ namespace Service.Service
         public async Task DeleteAsync(int id)
         {
             await _feedbackOrderRepository.DeleteAsync(id);
+        }
+
+        public async Task<List<FeedbackOrder>> GetByOrderIdAsync(int orderId)
+        {
+            return await _feedbackOrderRepository.GetByOrderIdAsync(orderId);
         }
     }
 }

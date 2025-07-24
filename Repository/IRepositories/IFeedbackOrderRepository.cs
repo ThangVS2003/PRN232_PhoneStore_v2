@@ -14,5 +14,6 @@ namespace Repository.IRepository
         Task AddAsync(FeedbackOrder feedbackOrder);
         Task UpdateAsync(FeedbackOrder feedbackOrder);
         Task DeleteAsync(int id);
+        Task<List<FeedbackOrder>> GetByOrderIdAsync(int orderId);
     }
 }

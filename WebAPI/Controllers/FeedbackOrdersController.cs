@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using PhoneStoreAPI.Models;
 using Service.IService;
+using Service.Service;
 
 namespace PhoneStoreAPI.Controllers
 {
@@ -100,6 +101,26 @@ namespace PhoneStoreAPI.Controllers
 
             await _feedbackOrderService.DeleteAsync(id);
             return Ok("Đã xóa thành công");
+        }
+
+        [HttpGet("order/{orderId}")]
+        public async Task<IActionResult> GetByOrderId(int orderId)
+        {
+            var feedbacks = await _feedbackOrderService.GetByOrderIdAsync(orderId);
+            if (feedbacks == null || !feedbacks.Any())
+                return NotFound("No feedback found for the given order.");
+
+            var dtos = feedbacks.Select(f => new FeedbackOrderDto
+            {
+                Id = f.Id,
+                UserName = f.User.Name,
+                OrderId = f.OrderId,
+                Rating = f.Rating,
+                Comment = f.Comment,
+                CreatedAt = f.CreatedAt
+            }).ToList();
+
+            return Ok(dtos);
         }
     }
 }

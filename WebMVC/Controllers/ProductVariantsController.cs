@@ -192,5 +192,125 @@ namespace WebMVC.Controllers
                 return BadRequest("Lỗi khi khôi phục biến thể: " + ex.Message);
             }
         }
+
+
+        //////////////////// TRang Variants riêng (bỏ qua)
+        // GET: /ProductVariants?page=1
+        [HttpGet]
+        public async Task<IActionResult> Index(int page = 1)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"ProductVariants?page={page}&pageSize=5");
+                if (!response.IsSuccessStatusCode)
+                    return View("Error");
+
+                var content = await response.Content.ReadAsStringAsync();
+                var result = JsonDocument.Parse(content);
+
+                var json = result.RootElement.GetProperty("data").GetRawText();
+                var variants = JsonSerializer.Deserialize<List<ProductVariantViewModel>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                int totalItems = result.RootElement.GetProperty("totalItems").GetInt32();
+                int totalPages = (int)Math.Ceiling(totalItems / 5.0);
+
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
+                ViewBag.IsSearch = false;
+
+                // Lấy danh sách Colors & Versions cho dropdown
+                ViewBag.Colors = await GetColorSelectList();
+                ViewBag.Versions = await GetVersionSelectList();
+
+                return View("~/Views/Staff/ProductVariants/Index.cshtml", variants);
+            }
+            catch
+            {
+                return View("Error");
+            }
+        }
+
+        // GET: /ProductVariants/Search?productName=...&color=...&version=...&page=1
+        //[HttpGet("Search")]
+        //public async Task<IActionResult> Search(string productName, string color, string version, int page = 1)
+        //{
+        //    try
+        //    {
+        //        var url = $"ProductVariants/search?productName={productName}&color={color}&version={version}&page={page}&pageSize=5";
+        //        var response = await _httpClient.GetAsync(url);
+
+        //        List<ProductVariantViewModel> variants = new List<ProductVariantViewModel>();
+        //        int totalItems = 0;
+
+        //        if (response.IsSuccessStatusCode)
+        //        {
+        //            var content = await response.Content.ReadAsStringAsync();
+        //            var result = JsonDocument.Parse(content);
+
+        //            var json = result.RootElement.GetProperty("data").GetRawText();
+        //            variants = JsonSerializer.Deserialize<List<ProductVariantViewModel>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        //            totalItems = result.RootElement.GetProperty("totalItems").GetInt32();
+        //        }
+        //        else if (response.StatusCode == HttpStatusCode.NotFound)
+        //        {
+        //            variants = new List<ProductVariantViewModel>();
+        //        }
+        //        else
+        //        {
+        //            return View("Error");
+        //        }
+
+        //        int totalPages = (int)Math.Ceiling(totalItems / 5.0);
+
+        //        ViewBag.CurrentPage = page;
+        //        ViewBag.TotalPages = totalPages;
+        //        ViewBag.SelectedProductName = productName;
+        //        ViewBag.SelectedColor = color;
+        //        ViewBag.SelectedVersion = version;
+        //        ViewBag.IsSearch = true;
+
+        //        ViewBag.Colors = await GetColorSelectList();
+        //        ViewBag.Versions = await GetVersionSelectList();
+
+        //        return View("~/Views/Staff/ProductVariants/Index.cshtml", variants);
+        //    }
+        //    catch
+        //    {
+        //        return View("Error");
+        //    }
+        //}
+
+        private async Task<List<SelectListItem>> GetColorSelectList()
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync("colors");
+                var content = await response.Content.ReadAsStringAsync();
+                var colors = JsonSerializer.Deserialize<List<ColorViewModel>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                return colors.Select(c => new SelectListItem { Value = c.Name, Text = c.Name }).ToList();
+            }
+            catch
+            {
+                return new List<SelectListItem>();
+            }
+        }
+
+        private async Task<List<SelectListItem>> GetVersionSelectList()
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync("versions");
+                var content = await response.Content.ReadAsStringAsync();
+                var versions = JsonSerializer.Deserialize<List<VersionViewModel>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                return versions.Select(v => new SelectListItem { Value = v.Name, Text = v.Name }).ToList();
+            }
+            catch
+            {
+                return new List<SelectListItem>();
+            }
+        }
     }
 }
