@@ -114,10 +114,18 @@ namespace PhoneStoreAPI.Controllers
             return Ok(products);
         }
 
-        [HttpGet("search")]
-        public async Task<IActionResult> Search([FromQuery] string? name, [FromQuery] int? brandId, [FromQuery] decimal? minPrice, [FromQuery] decimal? maxPrice)
+        [HttpGet("by-version/{versionId}")]
+        public async Task<IActionResult> GetByVersionId(int versionId)
         {
-            var products = await _productService.SearchAsync(name, brandId, minPrice, maxPrice);
+            var products = await _productService.GetByVersionIdAsync(versionId);
+            return Ok(products);
+        }
+
+        [HttpGet("search")]
+        public async Task<IActionResult> Search([FromQuery] string? name, [FromQuery] int? brandId, [FromQuery] int? versionId,
+                        [FromQuery] decimal? minPrice, [FromQuery] decimal? maxPrice)
+        {
+            var products = await _productService.SearchAsync(name, brandId, versionId, minPrice, maxPrice);
             return Ok(products);
         }
 

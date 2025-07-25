@@ -8,8 +8,9 @@ namespace Service.IService
     {
         Task<List<Product>> GetAllAsync(bool includeDeleted = false);
         Task<Product> GetByIdAsync(int id, bool includeDeleted = false);
-        Task<List<Product>> SearchAsync(string? name, int? brandId, decimal? minPrice, decimal? maxPrice);
+        Task<List<Product>> SearchAsync(string? name, int? brandId, int? versionId, decimal? minPrice, decimal? maxPrice);
         Task<List<Product>> GetByBrandIdAsync(int brandId);
+        Task<List<Product>> GetByVersionIdAsync(int versionId);
         Task<List<Product>> GetByColorNameAsync(string colorName);
         Task<Product?> GetBySerialNumberAsync(string serialNumber);
         Task<List<Product>> GetProductsByVersionNameAsync(string versionName);

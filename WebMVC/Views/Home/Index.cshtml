@@ -67,6 +67,32 @@
                         </div>
                     </form>
 
+                    <!-- Versions -->
+                    <form asp-action="SearchProduct" asp-controller="Home" method="post" class="mb-3">
+                        <h6 class="fw-semibold mb-2">Versions</h6>
+                        <div class="list-group list-group-flush">
+                            @{
+                                var versions = ViewBag.Versions as List<BusinessObject.Models.Version> ?? new();
+                                var versionCounts = ViewBag.VersionProductCounts as Dictionary<int, int> ?? new();
+                            }
+                            @foreach (var version in versions)
+                            {
+                                <label class="list-group-item d-flex justify-content-between align-items-center">
+                                    <input class="form-check-input me-2"
+                                           type="radio"
+                                           name="versionId"
+                                           value="@version.Id"
+                                    @(ViewBag.SelectedVersionId == version.Id ? "checked" : "")
+                                           onchange="this.form.submit()" />
+                                    @version.Name
+                                    <span class="badge rounded-pill">
+                                        @(versionCounts.ContainsKey(version.Id) ? versionCounts[version.Id] : 0)
+                                    </span>
+                                </label>
+                            }
+                        </div>
+                    </form>
+
                     <!-- Price -->
                     <form asp-action="SearchProduct" asp-controller="Home" method="post">
                         <h6 class="fw-semibold mb-2">Price</h6>

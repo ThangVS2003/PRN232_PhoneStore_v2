@@ -50,18 +50,30 @@ namespace Repository.Repository
             return product;
         }
 
-        public async Task<List<Product>> SearchAsync(string? name, int? brandId, decimal? minPrice, decimal? maxPrice)
+        public async Task<List<Product>> SearchAsync(string? name, int? brandId, int? versionId, decimal? minPrice, decimal? maxPrice)
         {
             var query = _context.Products
                 .Where(p => p.IsDeleted == false);
 
             if (!string.IsNullOrEmpty(name))
                 query = query.Where(p => p.Name.Contains(name));
+
             if (brandId.HasValue)
                 query = query.Where(p => p.BrandId == brandId);
 
+            if (versionId.HasValue)
+                query = query.Where(p => p.ProductVariants.Any(v => v.VersionId == versionId && v.IsDeleted == false));
+
+            // Nếu muốn, có thể lọc thêm theo minPrice, maxPrice trên ProductVariant:
+            // Ví dụ:
+            if (minPrice.HasValue)
+                query = query.Where(p => p.ProductVariants.Any(v => v.SellingPrice >= minPrice && v.IsDeleted == false));
+            if (maxPrice.HasValue)
+                query = query.Where(p => p.ProductVariants.Any(v => v.SellingPrice <= maxPrice && v.IsDeleted == false));
+
             var products = await query.ToListAsync();
-            Console.WriteLine($"SearchAsync: Found {products.Count} products for brandId={brandId}, name={name}");
+
+            Console.WriteLine($"SearchAsync: Found {products.Count} products for name={name}, brandId={brandId}, versionId={versionId}");
             return products;
         }
 
@@ -73,6 +85,17 @@ namespace Repository.Repository
             Console.WriteLine($"GetByBrandIdAsync: Found {products.Count} products for brandId={brandId}");
             return products;
         }
+        public async Task<List<Product>> GetByVersionIdAsync(int versionId)
+        {
+            var products = await _context.Products
+                .Where(p => p.IsDeleted == false &&
+                    p.ProductVariants.Any(v => v.VersionId == versionId && v.IsDeleted == false))
+                .ToListAsync();
+
+            Console.WriteLine($"GetByVersionIdAsync: Found {products.Count} products for versionId={versionId}");
+            return products;
+        }
+
         public async Task<List<Product>> GetByColorNameAsync(string colorName)
         {
             return await _context.Products
