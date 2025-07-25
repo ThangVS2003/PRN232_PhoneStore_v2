@@ -80,5 +80,10 @@ namespace Repository.Repository
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<User> GetByEmailAsync(string email)
+        {
+            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email && u.IsDeleted == false);
+        }
     }
 }
