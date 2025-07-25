@@ -195,6 +195,7 @@ namespace PhoneStoreAPI.Controllers
                 order.ShippingAddress,
                 Products = order.OrderDetails.Select(od => new
                 {
+                    ProductId = od.ProductVariant.ProductId,
                     ProductName = od.ProductVariant.Product.Name,
                     Version = od.ProductVariant.Version?.Name,
                     Color = od.ProductVariant.Color?.Name,
