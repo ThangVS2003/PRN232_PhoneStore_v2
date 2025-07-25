@@ -9,6 +9,8 @@ using System.IdentityModel.Tokens.Jwt;
 using PhoneStoreMVC.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
+using System.ComponentModel.DataAnnotations;
+using WebMVC.ViewModel;
 
 namespace PhoneStoreMVC.Controllers
 {
@@ -244,6 +246,77 @@ namespace PhoneStoreMVC.Controllers
                 ModelState.AddModelError(string.Empty, $"Đã xảy ra lỗi: {ex.Message}");
                 return View(model);
             }
+        }
+
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model, string action)
+        {
+            if (action == "SendOtp")
+            {
+                ModelState.Remove(nameof(model.NewPassword));
+                ModelState.Remove(nameof(model.Otp));
+
+                if (string.IsNullOrEmpty(model.EmailToSendOtp))
+                {
+                    ModelState.AddModelError(nameof(model.EmailToSendOtp), "Email không được để trống");
+                    return View(model);
+                }
+
+                try
+                {
+                    var sendModel = new { Username = model.Username, EmailToSendOtp = model.EmailToSendOtp };
+                    var response = await _httpClient.PostAsJsonAsync("api/ForgotPassword/send-otp", sendModel);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        TempData["SuccessMessage"] = "Đã gửi OTP thành công";
+                    }
+                    else
+                    {
+                        var error = await response.Content.ReadAsStringAsync();
+                        ModelState.AddModelError(string.Empty, $"Gửi OTP thất bại: {error}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Lỗi khi gửi OTP");
+                    ModelState.AddModelError(string.Empty, "Đã xảy ra lỗi: " + ex.Message);
+                }
+
+                return View(model);
+            }
+
+            if (action == "ResetPassword")
+            {
+                // Không kiểm tra gì, gửi luôn
+                try
+                {
+                    var resetModel = new { Username = model.Username, Otp = model.Otp, NewPassword = model.NewPassword };
+                    var response = await _httpClient.PostAsJsonAsync("api/ForgotPassword/reset-password", resetModel);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        //TempData["SuccessMessage"] = "Đổi mật khẩu thành công";
+                        return RedirectToAction("Login");
+                    }
+                    else
+                    {
+                        var error = await response.Content.ReadAsStringAsync();
+                        ModelState.AddModelError(string.Empty, $"Đổi mật khẩu thất bại: {error}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Lỗi khi đổi mật khẩu");
+                    ModelState.AddModelError(string.Empty, "Đã xảy ra lỗi: " + ex.Message);
+                }
+            }
+
+            return View(model);
         }
     }
 
