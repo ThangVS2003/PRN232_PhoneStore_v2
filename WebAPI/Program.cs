@@ -141,6 +141,7 @@ namespace PhoneStoreAPI
             builder.Services.AddScoped<IVoucherService, VoucherService>();
             builder.Services.AddScoped<IOrderService, OrderService>();
             builder.Services.AddScoped<IOrderDetailService, OrderDetailService>();
+            builder.Services.AddScoped<IForgotPasswordService, ForgotPasswordService>();
 
             //thangne
             builder.Services.AddScoped<IDashboardService, DashboardService>();

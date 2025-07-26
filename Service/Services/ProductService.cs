@@ -25,15 +25,20 @@ namespace Service.Service
             return await _productRepository.GetByIdAsync(id, includeDeleted);
         }
 
-        public async Task<List<Product>> SearchAsync(string? name, int? brandId, decimal? minPrice, decimal? maxPrice)
+        public async Task<List<Product>> SearchAsync(string? name, int? brandId, int? versionId, decimal? minPrice, decimal? maxPrice)
         {
-            return await _productRepository.SearchAsync(name, brandId, minPrice, maxPrice);
+            return await _productRepository.SearchAsync(name, brandId, versionId, minPrice, maxPrice);
         }
 
         public async Task<List<Product>> GetByBrandIdAsync(int brandId)
         {
             return await _productRepository.GetByBrandIdAsync(brandId);
         }
+        public async Task<List<Product>> GetByVersionIdAsync(int versionId)
+        {
+            return await _productRepository.GetByVersionIdAsync(versionId);
+        }
+
         public async Task<List<Product>> GetByColorNameAsync(string colorName)
         {
             return await _productRepository.GetByColorNameAsync(colorName);

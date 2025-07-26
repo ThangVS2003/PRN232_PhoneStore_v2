@@ -45,6 +45,10 @@
                         <th class="text-center">Quantity</th>
                         <th class="text-end">Unit Price</th>
                         <th class="text-end">Subtotal</th>
+                        @if (statusKey == "delivered")
+                        {
+                            <th class="text-center">Action</th>
+                        }
                     </tr>
                 </thead>
                 <tbody>
@@ -70,6 +74,13 @@
                             <td class="text-center">@item.Quantity</td>
                             <td class="text-end">@FormatPrice(item.UnitPrice)</td>
                             <td class="text-end">@FormatPrice(subtotal)</td>
+                            @if (statusKey == "delivered")
+                            {
+                                <td class="text-center">
+                                    <a href="@Url.Action("FeedbackProduct", "FeedbackProduct", new { orderId = Model.OrderId, productId = item.ProductId })" class="btn btn-sm btn-primary">Feedback</a>
+                                </td>
+                            }
+
                         </tr>
                     }
                 </tbody>

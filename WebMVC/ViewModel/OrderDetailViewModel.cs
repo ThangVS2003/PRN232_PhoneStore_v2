@@ -8,12 +8,16 @@ namespace PhoneStoreMVC.ViewModels
     {
         [JsonPropertyName("id")]
         public int OrderId { get; set; }
+
         [JsonPropertyName("orderDate")]
         public DateTime? OrderDate { get; set; }
+
         [JsonPropertyName("status")]
         public string? Status { get; set; }
+
         [JsonPropertyName("totalAmount")]
         public decimal? TotalAmount { get; set; }
+
         [JsonPropertyName("shippingAddress")]
         public string? ShippingAddress { get; set; }
 
@@ -22,6 +26,9 @@ namespace PhoneStoreMVC.ViewModels
 
     public class OrderProductDetailViewModel
     {
+        [JsonPropertyName("productId")]
+        public int ProductId { get; set; }
+
         [JsonPropertyName("productName")]
         public string ProductName { get; set; } = string.Empty;
 
@@ -42,5 +49,4 @@ namespace PhoneStoreMVC.ViewModels
 
         public decimal? SubTotal => UnitPrice * Quantity;
     }
-
 }

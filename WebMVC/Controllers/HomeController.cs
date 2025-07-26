@@ -18,7 +18,8 @@ namespace PhoneStoreMVC.Controllers
             _httpClient = httpClientFactory.CreateClient("PhoneStoreAPI");
         }
 
-        public async Task<IActionResult> Index(int? brandId, decimal? minPrice, decimal? maxPrice, string? name, int page = 1, int pageSize = 6)
+        public async Task<IActionResult> Index(int? brandId, int? versionId, decimal? minPrice, decimal? maxPrice,
+            string? name, int page = 1, int pageSize = 6)
         {
             try
             {
@@ -46,6 +47,32 @@ namespace PhoneStoreMVC.Controllers
                 }
                 ViewBag.BrandProductCounts = brandProductCounts;
 
+
+                // Lấy danh sách phiên bản (versions)
+                var versionsResponse = await _httpClient.GetFromJsonAsync<List<BusinessObject.Models.Version>>("api/Versions");
+                ViewBag.Versions = versionsResponse ?? new List<BusinessObject.Models.Version>();
+                Console.WriteLine($"Versions count: {versionsResponse?.Count ?? 0}");
+
+                // Đếm số sản phẩm theo phiên bản
+                var versionProductCounts = new Dictionary<int, int>();
+                foreach (var version in ViewBag.Versions)
+                {
+                    try
+                    {
+                        Console.WriteLine($"Calling API: api/Products/by-version/{version.Id}");
+                        var productsByVersion = await _httpClient.GetFromJsonAsync<List<Product>>($"api/Products/by-version/{version.Id}");
+                        Console.WriteLine($"Products for VersionId {version.Id}: {productsByVersion?.Count ?? 0}");
+                        versionProductCounts[version.Id] = productsByVersion?.Count ?? 0;
+                    }
+                    catch (HttpRequestException ex)
+                    {
+                        Console.WriteLine($"Error calling API for VersionId {version.Id}: {ex.Message}");
+                        versionProductCounts[version.Id] = 0;
+                    }
+                }
+                ViewBag.VersionProductCounts = versionProductCounts;
+
+
                 // Lấy tất cả sản phẩm
                 List<Product> allProducts;
                 try
@@ -54,11 +81,15 @@ namespace PhoneStoreMVC.Controllers
                     allProducts = await _httpClient.GetFromJsonAsync<List<Product>>("api/Products");
                     Console.WriteLine($"Total products from api/Products: {allProducts?.Count ?? 0}");
 
-                    // Lọc thủ công theo brandId và name
+                    // Lọc thủ công theo brandId, name và versionId
                     if (brandId.HasValue)
                         allProducts = allProducts.Where(p => p.BrandId == brandId.Value).ToList();
                     if (!string.IsNullOrEmpty(name))
                         allProducts = allProducts.Where(p => p.Name.Contains(name, StringComparison.OrdinalIgnoreCase)).ToList();
+                    if (versionId.HasValue)
+                    {
+                        allProducts = allProducts.Where(p => p.ProductVariants.Any(v => v.VersionId == versionId)).ToList();
+                    }
                 }
                 catch (HttpRequestException ex)
                 {
@@ -73,6 +104,7 @@ namespace PhoneStoreMVC.Controllers
 
                 ViewBag.Products = paginatedProducts;
                 ViewBag.SelectedBrandId = brandId;
+                ViewBag.SelectedVersionId = versionId;
                 ViewBag.MinPrice = minPrice ?? 0;
                 ViewBag.MaxPrice = maxPrice ?? 1000000;
                 ViewBag.Name = name;
@@ -92,16 +124,15 @@ namespace PhoneStoreMVC.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SearchProduct(string? name, int? brandId, int page = 1, int pageSize = 6)
+        public async Task<IActionResult> SearchProduct(string? name, int? brandId, int? versionId, int page = 1, int pageSize = 6)
         {
             // Tạo URI với query parameters
             var query = HttpUtility.ParseQueryString(string.Empty);
             if (!string.IsNullOrWhiteSpace(name)) query["name"] = name;
-            //// thêm các param khác nếu cần: brandId, minPrice, maxPrice
-            //query["brandId"] = "2";
-            //query["minPrice"] = "100";
-            //query["maxPrice"] = "1000";
+            if (brandId.HasValue) query["brandId"] = brandId.Value.ToString();
+            if (versionId.HasValue) query["versionId"] = versionId.Value.ToString();
             var uri = "api/Products/search?" + query;
+
             var products = await _httpClient.GetFromJsonAsync<List<Product>>(uri);
             ViewBag.Products = products;
 
@@ -127,15 +158,34 @@ namespace PhoneStoreMVC.Controllers
             }
             ViewBag.BrandProductCounts = brandProductCounts;
 
+            var versionsResponse = await _httpClient.GetFromJsonAsync<List<BusinessObject.Models.Version>>("api/Versions");
+            ViewBag.Versions = versionsResponse ?? new List<BusinessObject.Models.Version>();
+
+            var versionProductCounts = new Dictionary<int, int>();
+            foreach (var version in ViewBag.Versions)
+            {
+                try
+                {
+                    var productsByVersion = await _httpClient.GetFromJsonAsync<List<Product>>($"api/Products/by-version/{version.Id}");
+                    versionProductCounts[version.Id] = productsByVersion?.Count ?? 0;
+                }
+                catch (HttpRequestException ex)
+                {
+                    versionProductCounts[version.Id] = 0;
+                }
+            }
+            ViewBag.VersionProductCounts = versionProductCounts;
+
             // Phân trang
             int totalItems = products.Count;
             int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
             var paginatedProducts = products.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
             ViewBag.Products = paginatedProducts;
-            //ViewBag.SelectedBrandId = brandId;
-            //ViewBag.MinPrice = minPrice ?? 0;
-            //ViewBag.MaxPrice = maxPrice ?? 1000000;
+            ViewBag.SelectedBrandId = brandId;
+            ViewBag.SelectedVersionId = versionId;
+            // ViewBag.MinPrice = minPrice ?? 0;
+            // ViewBag.MaxPrice = maxPrice ?? 1000000;
             ViewBag.Name = name;
             ViewBag.CurrentPage = page;
             ViewBag.TotalPages = totalPages;
