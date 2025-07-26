@@ -15,6 +15,7 @@ using Service.Services;
 using Microsoft.AspNetCore.OData;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
+using VNPAY.NET;
 
 namespace PhoneStoreAPI
 {
@@ -28,7 +29,7 @@ namespace PhoneStoreAPI
             builder.Services.AddDbContext<DbPhoneStoreContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("MyCnn")
                     ?? throw new InvalidOperationException("Connection string 'MyCnn' not found.")));
-
+            builder.Services.AddScoped<IVnpay, Vnpay>();
             // Add Controllers
             builder.Services.AddControllers()
      .AddJsonOptions(options =>
@@ -55,7 +56,7 @@ namespace PhoneStoreAPI
                             Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
                     };
                 });
-
+            builder.Services.AddControllers();
             // Add Swagger with JWT support
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
@@ -86,12 +87,18 @@ namespace PhoneStoreAPI
                 c.CustomSchemaIds(type => type.FullName);
             });
 
-            // Add CORS
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowAll", builder =>
-                    builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+                options.AddPolicy("AllowWebMVC", builder =>
+                {
+                    builder.WithOrigins("https://localhost:7211")
+                           .AllowAnyHeader()
+                           .AllowAnyMethod()
+                           .AllowCredentials();
+                });
             });
+
+            
 
             // Add Logging
             builder.Services.AddLogging(logging =>
@@ -139,7 +146,7 @@ namespace PhoneStoreAPI
             builder.Services.AddScoped<IDashboardService, DashboardService>();
             builder.Services.AddScoped<ICartService, CartService>();
             var app = builder.Build();
-
+            app.UseCors("AllowWebMVC");
             // Configure the HTTP request pipeline
             if (app.Environment.IsDevelopment())
             {

@@ -82,7 +82,7 @@
                     <p><strong>Địa chỉ:</strong> @(Model.ShippingAddress ?? "Chưa có địa chỉ")</p>
                     <p><small>Để thay đổi địa chỉ, vui lòng cập nhật trong <a href="@Url.Action("Profile", "Account")">hồ sơ cá nhân</a>.</small></p>
                     <h5>Tổng tiền: <span id="cart-total">@Model.Total.ToString("#,##0") ₫</span></h5>
-                    <a href="@Url.Action("Checkout", "Order")" class="btn primary-btn">Thanh toán</a>
+                    <button class="btn primary-btn" id="create-payment">Thanh toán</button>
                 </div>
             </div>
         }
@@ -283,7 +283,7 @@
                         console.log('Remove voucher response:', response);
                         if (response.success) {
                             jQuery('#cart-total').text(formatVND(response.total));
-                            jQuery('#voucher-code').val(''); // Xóa giá trị trong input
+                            jQuery('#voucher-code').val('');
                             jQuery(document).trigger('cartUpdated');
                             location.reload();
                         } else {
@@ -320,6 +320,52 @@
                     }
                 });
             });
+
+            jQuery('#create-payment').click(function () {
+                var totalAmount = @Model.Total;
+                jQuery.ajax({
+                    url: '@Url.Action("CreatePaymentUrl", "Cart")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ amount: totalAmount }),
+                    success: function (response) {
+                        console.log('CreatePaymentUrl response:', response);
+                        if (response.success) {
+                            window.location.href = response.paymentUrl;
+                        } else {
+                            if (response.redirectToLogin) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Lỗi!',
+                                    text: response.message || 'Vui lòng đăng nhập để thanh toán.',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.href = '@Url.Action("Login", "Account")';
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Lỗi!',
+                                    text: response.message || 'Không thể thanh toán.',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            }
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error('CreatePaymentUrl error:', xhr.responseText);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi!',
+                            text: xhr.responseJSON?.message || 'Đã xảy ra lỗi khi thanh toán.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                });
+            });
         });
     </script>
     <style>
@@ -348,10 +394,10 @@
         .primary-btn {
             background-color: #ffba00;
             color: #fff;
-            padding: 6px 12px; /* Giảm padding */
+            padding: 6px 12px;
             border: none;
             border-radius: 6px;
-            font-size: 0.9em; /* Giảm font-size */
+            font-size: 0.9em;
             transition: background-color 0.3s ease;
         }
 
@@ -360,17 +406,17 @@
             }
 
         .btn-danger {
-            padding: 6px 12px; /* Giảm padding */
-            font-size: 0.9em; /* Giảm font-size */
+            padding: 6px 12px;
+            font-size: 0.9em;
         }
 
         .btn-secondary {
             background-color: #6c757d;
             color: #fff;
-            padding: 6px 12px; /* Giảm padding */
+            padding: 6px 12px;
             border: none;
             border-radius: 6px;
-            font-size: 0.9em; /* Giảm font-size */
+            font-size: 0.9em;
             transition: background-color 0.3s ease;
         }
 

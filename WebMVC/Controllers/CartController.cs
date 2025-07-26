@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace WebMVC.Controllers
 {
@@ -11,13 +12,19 @@ namespace WebMVC.Controllers
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<CartController> _logger;
+        private readonly JsonSerializerOptions _jsonOptions;
 
         public CartController(IHttpClientFactory httpClientFactory, ILogger<CartController> logger)
         {
             _httpClient = httpClientFactory.CreateClient("PhoneStoreAPI");
             _logger = logger;
+            _jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
         }
 
+        // Các action khác (Index, AddToCart, UpdateCartItem, RemoveCartItem, ApplyVoucher, RemoveVoucher, GetCartCount) giữ nguyên
         public async Task<IActionResult> Index()
         {
             try
@@ -183,7 +190,7 @@ namespace WebMVC.Controllers
                 }
 
                 _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-                var requestBody = new { VoucherCode = request.voucherCode }; // Đảm bảo gửi VoucherCode với chữ V hoa
+                var requestBody = new { VoucherCode = request.voucherCode };
                 var response = await _httpClient.PostAsJsonAsync("api/Cart/apply-voucher", requestBody);
 
                 if (response.IsSuccessStatusCode)
@@ -211,10 +218,7 @@ namespace WebMVC.Controllers
                 return Json(new { success = false, message = $"Không thể áp dụng voucher: {ex.Message}" });
             }
         }
-        public class ApplyVoucherRequestDto
-        {
-            public string voucherCode { get; set; }
-        }
+
         [HttpPost]
         public async Task<IActionResult> RemoveVoucher()
         {
@@ -256,11 +260,7 @@ namespace WebMVC.Controllers
                 return Json(new { success = false, message = $"Không thể xóa voucher: {ex.Message}" });
             }
         }
-        public class RemoveVoucherResponse
-        {
-            public bool success { get; set; }
-            public decimal total { get; set; }
-        }
+
         [HttpGet]
         public async Task<IActionResult> GetCartCount()
         {
@@ -293,6 +293,51 @@ namespace WebMVC.Controllers
             {
                 _logger.LogError(ex, "Lỗi khi lấy số lượng giỏ hàng");
                 return Json(new { success = false, cartCount = 0, message = $"Không thể lấy số lượng giỏ hàng: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreatePaymentUrl()
+        {
+            try
+            {
+                var token = HttpContext.Request.Cookies["JwtToken"];
+                if (string.IsNullOrEmpty(token))
+                {
+                    _logger.LogWarning("Không tìm thấy token JWT khi tạo URL thanh toán.");
+                    return Json(new { success = false, message = "Vui lòng đăng nhập để thanh toán.", redirectToLogin = true });
+                }
+
+                _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                var cartResponse = await _httpClient.GetFromJsonAsync<CartViewModel>("api/Cart");
+                if (cartResponse == null || !cartResponse.OrderDetails.Any())
+                {
+                    _logger.LogWarning("Giỏ hàng trống khi tạo URL thanh toán.");
+                    return Json(new { success = false, message = "Giỏ hàng trống." });
+                }
+
+                var vnpayRequest = new VnpayRequestDto
+                {
+                    Amount = (double)cartResponse.Total
+                };
+
+                _logger.LogInformation("Calling VNPAY API at: {Url}", _httpClient.BaseAddress + "CreatePaymentUrl");
+                var vnpayResponse = await _httpClient.PostAsJsonAsync("CreatePaymentUrl", vnpayRequest);
+                _logger.LogInformation("VNPAY API response: {StatusCode}", vnpayResponse.StatusCode);
+                vnpayResponse.EnsureSuccessStatusCode();
+                var vnpayResult = await vnpayResponse.Content.ReadFromJsonAsync<VnpayResponseDto>(_jsonOptions);
+
+                return Json(new { success = true, paymentUrl = vnpayResult.PaymentUrl });
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "CreatePaymentUrl error: {Message}, StatusCode: {StatusCode}", ex.Message, ex.StatusCode);
+                return Json(new { success = false, message = $"Không thể thanh toán: {ex.Message}" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "CreatePaymentUrl error: {Message}", ex.Message);
+                return Json(new { success = false, message = $"Không thể thanh toán: {ex.Message}" });
             }
         }
 
@@ -366,6 +411,12 @@ namespace WebMVC.Controllers
         public decimal total { get; set; }
     }
 
+    public class RemoveVoucherResponse
+    {
+        public bool success { get; set; }
+        public decimal total { get; set; }
+    }
+
     public class CartCountResponse
     {
         public bool success { get; set; }
@@ -375,5 +426,21 @@ namespace WebMVC.Controllers
     public class UpdateCartItemDto
     {
         public int Quantity { get; set; }
+    }
+
+    public class ApplyVoucherRequestDto
+    {
+        public string voucherCode { get; set; }
+    }
+
+    public class VnpayRequestDto
+    {
+        public double Amount { get; set; }
+    }
+
+    public class VnpayResponseDto
+    {
+        public string PaymentUrl { get; set; }
+        public long PaymentId { get; set; }
     }
 }
